@@ -6,7 +6,7 @@
     {
       "name": "daily-strata",
       "source": "./plugins/daily-strata",
-      "description": "Nightly gather of Slack, Gmail, and calendar activity posted to a Strata project over MCP"
+      "description": "Nightly gather of Slack, Gmail, and calendar activity posted to a Strata project over MCP. Requires a Strata MCP server: prompted for your project's server URL on install."
     }
   ]
 }

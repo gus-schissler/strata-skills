@@ -20,6 +20,8 @@ To use the skill in your own Claude Code sessions (not just cloud routines), thi
 /reload-plugins
 ```
 
+On install you are prompted for your **Strata MCP server URL** (e.g. `https://strata-one-phi.vercel.app/api/mcp/YOURPROJECT`) — the plugin wires that server up for you. If the server flags as needing authentication, run `/mcp` and complete the OAuth sign-in once. If you already have the same Strata project connected as a claude.ai connector in this environment, skip the plugin's server or expect duplicate Strata tools.
+
 The skill is then available as `/daily-strata:daily-strata-gather`, or Claude invokes it automatically when you ask for a daily Strata gather. Supply the same config keys (channels, timezone, etc.) in your request. No `version` is pinned, so every commit here ships as an update.
 
 ## Setting up a routine
