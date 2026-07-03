@@ -10,6 +10,18 @@ A routine clones this repo, loads the skill from `.claude/skills/`, reads its co
 
 Gathers the previous calendar day of Slack messages, Gmail, and calendar events for a configured set of sources, assembles one dated markdown document, and posts it to the connected Strata project via `strata_post_document`. Idempotent per day (`external_id = slack-email-<date>`), so re-runs never duplicate. Writes nothing to disk.
 
+## Install as a plugin (interactive sessions)
+
+To use the skill in your own Claude Code sessions (not just cloud routines), this repo doubles as a plugin marketplace:
+
+```
+/plugin marketplace add gus-schissler/strata-skills
+/plugin install daily-strata@strata-skills
+/reload-plugins
+```
+
+The skill is then available as `/daily-strata:daily-strata-gather`, or Claude invokes it automatically when you ask for a daily Strata gather. Supply the same config keys (channels, timezone, etc.) in your request. No `version` is pinned, so every commit here ships as an update.
+
 ## Setting up a routine
 
 1. **Connect your accounts** at [claude.ai/customize/connectors](https://claude.ai/customize/connectors): Slack, Gmail, Google Calendar, and your Strata project connector. Gmail and Calendar must be connected here (they do not support local OAuth).

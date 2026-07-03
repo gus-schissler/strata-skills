@@ -1,0 +1,5 @@
+{
+  "name": "daily-strata",
+  "description": "Nightly gather of Slack, Gmail, and calendar activity posted to a Strata project over MCP",
+  "author": { "name": "Gus Schissler" }
+}

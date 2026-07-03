@@ -1,0 +1,12 @@
+{
+  "name": "strata-skills",
+  "owner": { "name": "Gus Schissler" },
+  "description": "Project-agnostic Claude Code skills for feeding a Strata knowledge graph",
+  "plugins": [
+    {
+      "name": "daily-strata",
+      "source": "./plugins/daily-strata",
+      "description": "Nightly gather of Slack, Gmail, and calendar activity posted to a Strata project over MCP"
+    }
+  ]
+}
