@@ -4,9 +4,9 @@
   "description": "Project-agnostic Claude Code skills for feeding a Strata knowledge graph",
   "plugins": [
     {
-      "name": "daily-strata",
+      "name": "stratagraph",
       "source": "./plugins/daily-strata",
-      "description": "Nightly gather of Slack, Gmail, and calendar activity posted to a Strata project over MCP. Requires your Strata project's MCP server connected, e.g. https://stratagraph.io/api/mcp/YOURPROJECT"
+      "description": "Skills for feeding a Stratagraph knowledge project over MCP. Requires your Strata project's MCP server connected, e.g. https://stratagraph.io/api/mcp/YOURPROJECT"
     }
   ]
 }

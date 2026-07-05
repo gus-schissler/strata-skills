@@ -16,7 +16,7 @@ To use the skill in your own Claude Code sessions (not just cloud routines), thi
 
 ```
 /plugin marketplace add gus-schissler/strata-skills
-/plugin install daily-strata@strata-skills
+/plugin install stratagraph@strata-skills
 /reload-plugins
 ```
 
@@ -27,7 +27,14 @@ The plugin needs your Strata project's MCP server connected. Add it wherever you
 
 If the server flags as needing authentication, run `/mcp` and complete the OAuth sign-in once.
 
-The skill is then available as `/daily-strata:daily-strata-gather`, or Claude invokes it automatically when you ask for a daily Strata gather. Supply the same config keys (channels, timezone, etc.) in your request. No `version` is pinned, so every commit here ships as an update.
+The skill is then available as `/stratagraph:daily-strata-gather`, or Claude invokes it automatically when you ask for a daily Strata gather. Supply the same config keys (channels, timezone, etc.) in your request. No `version` is pinned, so every commit here ships as an update.
+
+## Multiple projects
+
+Strata projects are strictly isolated — one connector per project (`/api/mcp/PROJECTA`, `/api/mcp/PROJECTB`), named distinctly (e.g. `strata-projecta`). Then:
+
+- **Routines:** one routine per project. Each attaches only that project's Strata connector and carries that project's config (its channels differ anyway). No ambiguity.
+- **Interactive:** if several Strata connectors are attached to one session, add `strata_project: <connector name>` to the config so the skill knows where to post. With exactly one attached, omit it.
 
 ## Setting up a routine
 
@@ -56,6 +63,7 @@ title_prefix: Slack & email log
 | `gmail_query` | no | Gmail search string; omit to skip email |
 | `timezone` | yes | IANA tz for the day window |
 | `title_prefix` | no | Document title label |
+| `strata_project` | no | Connector name to post to when several Strata connectors are attached |
 
 ## Notes
 

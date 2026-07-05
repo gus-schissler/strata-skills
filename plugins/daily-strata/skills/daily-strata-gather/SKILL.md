@@ -16,7 +16,7 @@ Assemble one calendar day of team activity (Slack + Gmail + Calendar) into a sin
 
 ## Project-agnostic by design
 
-- **Destination.** Post to whichever Strata connector is attached to this routine. Use the tool whose name ends in `strata_post_document`. Never assume a specific project, server URL, or connector UUID. If more than one Strata connector is attached, stop and report the ambiguity rather than guessing.
+- **Destination.** Post to whichever Strata connector is attached to this routine. Use the tool whose name ends in `strata_post_document`. Never assume a specific project, server URL, or connector UUID. If more than one Strata connector is attached, use the one named by `strata_project`; if that isn't set, stop and report the ambiguity rather than guessing.
 - **Tools by suffix.** Refer to every connector tool by its suffix, not its UUID prefix: `slack_read_channel`, `slack_read_thread`, `slack_read_user_profile`, `slack_search_*`, Gmail `search_threads` / `get_thread`, Calendar `list_events`. Use whatever Slack / Gmail / Calendar connector the routine has attached.
 - **Sources from config.** Read the config below from the routine prompt. Nothing about any specific team, channel, or person is baked into this skill.
 
@@ -27,6 +27,7 @@ Assemble one calendar day of team activity (Slack + Gmail + Calendar) into a sin
 - `gmail_query` (optional): Gmail search string identifying relevant mail (a label, sender set, or terms). Omit to skip email.
 - `timezone` (required): IANA tz for the day window, e.g. `America/New_York`.
 - `title_prefix` (optional): document title label. Default `Slack & email log`.
+- `strata_project` (optional): which Strata connector to post to, by connector name, when more than one is attached. Unnecessary when exactly one is attached.
 
 ## Steps
 
