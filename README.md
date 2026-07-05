@@ -1,6 +1,6 @@
 # strata-skills
 
-Project-agnostic Claude Code skills for feeding a [Strata](https://strata-one-phi.vercel.app) knowledge graph, built to run as unattended **cloud routines**.
+Project-agnostic Claude Code skills for feeding a [Strata](https://stratagraph.io) knowledge graph, built to run as unattended **cloud routines**.
 
 A routine clones this repo, loads the skill from `.claude/skills/`, reads its config from the routine prompt, and posts to whichever Strata project connector you attach. Nothing here is tied to a specific project, team, or connector, so any team can point their own routine at this repo with their own connections.
 
@@ -20,7 +20,12 @@ To use the skill in your own Claude Code sessions (not just cloud routines), thi
 /reload-plugins
 ```
 
-On install you are prompted for your **Strata MCP server URL** (e.g. `https://strata-one-phi.vercel.app/api/mcp/YOURPROJECT`) — the plugin wires that server up for you. If the server flags as needing authentication, run `/mcp` and complete the OAuth sign-in once. If you already have the same Strata project connected as a claude.ai connector in this environment, skip the plugin's server or expect duplicate Strata tools.
+The plugin needs your Strata project's MCP server connected. Add it wherever you run Claude:
+
+- **Desktop / claude.ai:** Settings → Connectors → Add custom connector, name `strata`, URL `https://stratagraph.io/api/mcp/YOURPROJECT`
+- **CLI:** `claude mcp add --transport http strata https://stratagraph.io/api/mcp/YOURPROJECT`
+
+If the server flags as needing authentication, run `/mcp` and complete the OAuth sign-in once.
 
 The skill is then available as `/daily-strata:daily-strata-gather`, or Claude invokes it automatically when you ask for a daily Strata gather. Supply the same config keys (channels, timezone, etc.) in your request. No `version` is pinned, so every commit here ships as an update.
 

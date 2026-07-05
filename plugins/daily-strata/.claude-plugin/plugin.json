@@ -1,19 +1,5 @@
 {
   "name": "daily-strata",
-  "description": "Nightly gather of Slack, Gmail, and calendar activity posted to a Strata project over MCP. Requires a Strata MCP server: on install you are prompted for your project's server URL.",
-  "author": { "name": "Gus Schissler" },
-  "userConfig": {
-    "strata_server_url": {
-      "type": "string",
-      "title": "Strata MCP server URL",
-      "description": "Your Strata project's MCP endpoint, e.g. https://strata-one-phi.vercel.app/api/mcp/YOURPROJECT",
-      "required": true
-    }
-  },
-  "mcpServers": {
-    "strata": {
-      "type": "http",
-      "url": "${user_config.strata_server_url}"
-    }
-  }
+  "description": "Nightly gather of Slack, Gmail, and calendar activity posted to a Strata project over MCP. Requires your Strata project's MCP server connected, e.g. https://stratagraph.io/api/mcp/YOURPROJECT",
+  "author": { "name": "Gus Schissler" }
 }
