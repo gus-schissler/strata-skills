@@ -1,6 +1,7 @@
 ---
-name: strata-genesis
-description: Use when cold-starting a Strata project from an existing knowledge backlog — meeting transcripts, chat logs, wikis, specs, design docs, ADRs — and activating it. Triggers include "genesis sweep", "initial load", "backlog import", "cold start a Strata project", "activate the imported graph", "write the baseline", or pointing at a corpus and asking for Strata-ready documents.
+name: import
+description: Use when cold-starting a Stratagraph knowledge graph from an existing backlog — meeting transcripts, chat logs, wikis, specs, design docs, ADRs — and activating it. Triggers include "genesis sweep", "initial load", "backlog import", "cold start a Stratagraph project", "activate the imported graph", "write the baseline", or pointing at a corpus and asking for Stratagraph-ready documents.
+compatibility: Requires a connected Stratagraph project MCP server (strata_import_document / strata_post_document / strata_get_graph_schema).
 ---
 
 # Strata Genesis — corpus → dormant graph → activated by baseline documents

@@ -6,13 +6,13 @@ Nothing here is tied to a specific project, team, or connector, so any team can 
 
 ## Skills
 
-### `strata-genesis`
+### `import`
 
-Cold-starts a Strata project from a backlog. Runs **interactively** on your agent: sweep a corpus of transcripts, docs, and chat logs, distill each source into atom-grain claims, and publish a `genesis-import.json` bundle you drop into Strata's **Import** page — then write a *baseline document* that activates the imported history. Ships `genesis.py`, a stdlib-only helper for the deterministic parts (corpus inventory, verbatim-span validation, bundle assembly). See ADR-0077. Invoke it with `/stratagraph:strata-genesis`, or by pointing it at a corpus and asking to cold-start a Strata project.
+Cold-starts a Stratagraph knowledge graph from a backlog. Runs **interactively** on your agent: sweep a corpus of transcripts, docs, and chat logs, distill each source into atom-grain claims, and publish a `genesis-import.json` bundle you drop into Stratagraph's **Import** page — then write a *baseline document* that activates the imported history. Ships `genesis.py`, a stdlib-only helper for the deterministic parts (corpus inventory, verbatim-span validation, bundle assembly). See ADR-0077. Invoke it with `/stratagraph:import`, or by pointing it at a corpus and asking to cold-start a Stratagraph project.
 
-### `daily-strata-gather`
+### `gather`
 
-Gathers the previous calendar day of Slack messages, Gmail, and calendar events for a configured set of sources, assembles one dated markdown document, and posts it to the connected Strata project via `strata_post_document`. Idempotent per day (`external_id = slack-email-<date>`), so re-runs never duplicate. Writes nothing to disk. Built to run as an unattended **cloud routine** (a routine clones this repo and loads the skill from `.claude/skills/`).
+Gathers the previous calendar day of Slack messages, Gmail, and calendar events for a configured set of sources, assembles one dated markdown document, and posts it to the connected Stratagraph project via `strata_post_document`. Idempotent per day (`external_id = slack-email-<date>`), so re-runs never duplicate. Writes nothing to disk. Built to run as an unattended **cloud routine** (a routine clones this repo and loads the skill from `.claude/skills/`).
 
 ## Install
 
@@ -26,11 +26,11 @@ The skills follow the open [Agent Skills](https://agentskills.io) standard (a `S
 /reload-plugins
 ```
 
-Then `/stratagraph:strata-genesis` (cold-start) or `/stratagraph:daily-strata-gather` are available, and Claude invokes them automatically when a request matches. No `version` is pinned, so every commit ships as an update.
+Then `/stratagraph:import` (cold-start) or `/stratagraph:gather` are available, and Claude invokes them automatically when a request matches. No `version` is pinned, so every commit ships as an update.
 
 ### Codex, Cursor, Copilot, Gemini CLI, Goose, and other agents
 
-These agents auto-discover skills from an `.agents/skills/` directory. Point yours at this repo's copy — either clone it and symlink/copy `strata-genesis` into your `~/.agents/skills/` (or a repo-local `.agents/skills/`), or use your agent's skill installer if it supports GitHub sources (e.g. Codex's `$skill-installer`). The skill then activates automatically when you ask to cold-start a Strata project.
+These agents auto-discover skills from an `.agents/skills/` directory. Point yours at this repo's copy — either clone it and symlink/copy `import` into your `~/.agents/skills/` (or a repo-local `.agents/skills/`), or use your agent's skill installer if it supports GitHub sources (e.g. Codex's `$skill-installer`). The skill then activates automatically when you ask to cold-start a Stratagraph project.
 
 ### MCP connection (all agents)
 
@@ -56,7 +56,7 @@ Strata projects are strictly isolated — one connector per project (`/api/mcp/P
 4. In the routine **prompt**, run the gather and supply your config:
 
 ```
-Run the daily-strata-gather skill for yesterday.
+Run the gather skill for yesterday.
 channels: #your-channel, #another-channel
 dm_users: Person A, Person B
 gmail_query: label:your-project
