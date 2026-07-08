@@ -6,7 +6,7 @@
     {
       "name": "stratagraph",
       "source": "./plugins/stratagraph",
-      "description": "Skills for feeding a Stratagraph knowledge project over MCP: strata-genesis (interactive cold-start) + daily-strata-gather (daily cloud routine). Requires your Strata project's MCP server connected, e.g. https://stratagraph.io/api/mcp/YOURPROJECT"
+      "description": "Skills for feeding a Stratagraph knowledge project over MCP: import (interactive cold-start) + gather (daily cloud routine). Requires your Stratagraph project's MCP server connected, e.g. https://stratagraph.io/api/mcp/YOURPROJECT"
     }
   ]
 }

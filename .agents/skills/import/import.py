@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-genesis.py -- deterministic helpers for the strata-genesis skill.
+import.py -- deterministic helpers for the import skill.
 
 This file holds ONLY mechanics. The discipline (provenance, atom grain, the
 Iron Rule, what to distill) lives in SKILL.md and is the agent's job; the agent
@@ -16,7 +16,7 @@ badly:
   validate   check one document's distilled atoms JSON: types against the
              fetched schema, and every span a CHARACTER-EXACT substring of the
              document text (the verbatim-span check that agents get wrong).
-  bundle     assemble/append document+atom entries into genesis-import.json,
+  bundle     assemble/append document+atom entries into import-bundle.json,
              idempotent by externalId, with a resumable worklist journal.
 
 Design constraints:
@@ -28,11 +28,11 @@ Design constraints:
   * No LLM calls, no network, no API key. Pure local computation.
 
 Usage:
-  python3 genesis.py inventory <root> [--exclude DIR ...] [--output-dir DIR]
+  python3 import.py inventory <root> [--exclude DIR ...] [--output-dir DIR]
                                       [--head-lines N] [--bucket quarter|month|year]
                                       [--include-noise]
-  python3 genesis.py validate <atoms.json> --text <document> --types t1,t2,...
-  python3 genesis.py bundle --output-dir DIR <entry.json> [<entry.json> ...]
+  python3 import.py validate <atoms.json> --text <document> --types t1,t2,...
+  python3 import.py bundle --output-dir DIR <entry.json> [<entry.json> ...]
 """
 
 import argparse
@@ -49,7 +49,7 @@ import sys
 HEAD_BYTES = 8192  # how much of each file to sniff for signals / head peek
 
 # Directory names skipped by default at ANY depth: VCS, dependency trees, build
-# and tool caches. A genesis corpus is never these, and a raw project dir is
+# and tool caches. A source corpus is never these, and a raw project dir is
 # ~90% node_modules/.git by file count. Override with --include-noise.
 DEFAULT_EXCLUDE_DIRS = frozenset([
     ".git", ".svn", ".hg", ".bzr",
@@ -150,7 +150,7 @@ def cmd_inventory(args):
     if args.output_dir:
         # Resolve from CWD (like `bundle` does) so one --output-dir value points
         # at the same folder for every subcommand; still excluded from the walk
-        # whenever it lands under root (the normal <root>/_genesis case).
+        # whenever it lands under root (the normal <root>/_import case).
         out_dir_abs = os.path.abspath(args.output_dir)
         excludes.add(out_dir_abs)
     skip_noise = not args.include_noise
@@ -217,7 +217,7 @@ def cmd_inventory(args):
 
     manifest = {
         "root": root,
-        "generatedBy": "genesis.py inventory",
+        "generatedBy": "import.py inventory",
         "tokenEstimateNote": "chars/4 from byte size; approximate, not billing",
         "autoExcludedDirs": [] if args.include_noise else sorted(DEFAULT_EXCLUDE_DIRS),
         "totals": {"files": len(files), "bytes": total_bytes, "estTokens": total_tokens},
@@ -318,7 +318,7 @@ def cmd_bundle(args):
     except (OSError, IOError) as exc:
         _fail("could not create output dir %s: %s" % (out_dir, exc))
         return 2
-    bundle_path = os.path.join(out_dir, "genesis-import.json")
+    bundle_path = os.path.join(out_dir, "import-bundle.json")
     journal_path = os.path.join(out_dir, "worklist.json")
 
     # Refuse to clobber an existing bundle we can't parse or that's the wrong
@@ -328,10 +328,10 @@ def cmd_bundle(args):
             with open(bundle_path, "r", encoding="utf-8") as fh:
                 bundle = json.load(fh)
         except (OSError, IOError, ValueError) as exc:
-            _fail("existing genesis-import.json is unreadable; refusing to overwrite: %s" % exc)
+            _fail("existing import-bundle.json is unreadable; refusing to overwrite: %s" % exc)
             return 2
         if not isinstance(bundle, dict) or not isinstance(bundle.get("documents"), list):
-            _fail("existing genesis-import.json has no documents[] array; refusing to overwrite")
+            _fail("existing import-bundle.json has no documents[] array; refusing to overwrite")
             return 2
     else:
         bundle = {"version": 1, "documents": []}
@@ -435,7 +435,7 @@ def _fail(msg):
 # ---------------------------------------------------------------------------
 
 def build_parser():
-    p = argparse.ArgumentParser(description="Deterministic helpers for the strata-genesis skill.")
+    p = argparse.ArgumentParser(description="Deterministic helpers for the import skill.")
     sub = p.add_subparsers(dest="command")
 
     inv = sub.add_parser("inventory", help="walk a corpus -> manifest JSON")
@@ -453,8 +453,8 @@ def build_parser():
     val.add_argument("--types", help="comma-separated allowed node types (from the fetched schema)")
     val.set_defaults(func=cmd_validate)
 
-    bun = sub.add_parser("bundle", help="assemble/append entries into genesis-import.json")
-    bun.add_argument("--output-dir", required=True, help="folder holding genesis-import.json + worklist.json")
+    bun = sub.add_parser("bundle", help="assemble/append entries into import-bundle.json")
+    bun.add_argument("--output-dir", required=True, help="folder holding import-bundle.json + worklist.json")
     bun.add_argument("entries", nargs="+", help="entry JSON files: { document: {...}, atoms: [...] }")
     bun.set_defaults(func=cmd_bundle)
     return p

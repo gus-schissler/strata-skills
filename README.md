@@ -8,7 +8,7 @@ Nothing here is tied to a specific project, team, or connector, so any team can 
 
 ### `import`
 
-Cold-starts a Stratagraph knowledge graph from a backlog. Runs **interactively** on your agent: sweep a corpus of transcripts, docs, and chat logs, distill each source into atom-grain claims, and publish a `genesis-import.json` bundle you drop into Stratagraph's **Import** page — then write a *baseline document* that activates the imported history. Ships `genesis.py`, a stdlib-only helper for the deterministic parts (corpus inventory, verbatim-span validation, bundle assembly). See ADR-0077. Invoke it with `/stratagraph:import`, or by pointing it at a corpus and asking to cold-start a Stratagraph project.
+Cold-starts a Stratagraph knowledge graph from a backlog. Runs **interactively** on your agent: sweep a corpus of transcripts, docs, and chat logs, distill each source into atom-grain claims, and publish a `import-bundle.json` bundle you drop into Stratagraph's **Import** page — then write a *baseline document* that activates the imported history. Ships `import.py`, a stdlib-only helper for the deterministic parts (corpus inventory, verbatim-span validation, bundle assembly). See ADR-0077. Invoke it with `/stratagraph:import`, or by pointing it at a corpus and asking to cold-start a Stratagraph project.
 
 ### `gather`
 
