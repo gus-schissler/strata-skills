@@ -1,6 +1,6 @@
 # strata-skills
 
-Project-agnostic Claude Code skills for feeding a [Strata](https://stratagraph.io) knowledge graph — one for **cold-starting** a project from an existing backlog, one for **keeping it fed** as an unattended cloud routine.
+Project-agnostic Claude Code skills for feeding a [Strata](https://stratagraph.io) knowledge graph — one for **cold-starting** a project from an existing corpus, one for **keeping it fed** as an unattended cloud routine.
 
 Nothing here is tied to a specific project, team, or connector, so any team can point their own agent or routine at this repo with their own connections.
 
@@ -8,7 +8,7 @@ Nothing here is tied to a specific project, team, or connector, so any team can 
 
 ### `import`
 
-Cold-starts a Stratagraph knowledge graph from a backlog. Runs **interactively** on your agent: sweep a corpus of transcripts, docs, and chat logs, distill each source into atom-grain claims, and publish a `import-bundle.json` bundle you drop into Stratagraph's **Import** page — then write a *baseline document* that activates the imported history. Ships `import.py`, a stdlib-only helper for the deterministic parts (corpus inventory, verbatim-span validation, bundle assembly). See ADR-0077. Invoke it with `/stratagraph:import`, or by pointing it at a corpus and asking to cold-start a Stratagraph project.
+Cold-starts a Stratagraph knowledge graph from an existing corpus. Runs **interactively** on your agent: sweep a corpus of transcripts, docs, and chat logs, distill each source into atom-grain claims, and publish a `import-bundle.json` bundle you drop into Stratagraph's **Import** page — then write a *baseline document* that activates the imported history. Ships `import.py`, a stdlib-only helper for the deterministic parts (corpus inventory, verbatim-span validation, bundle assembly). See ADR-0077. Invoke it with `/stratagraph:import`, or by pointing it at a corpus and asking to cold-start a Stratagraph project.
 
 ### `gather`
 

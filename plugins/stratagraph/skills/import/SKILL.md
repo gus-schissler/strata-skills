@@ -1,6 +1,6 @@
 ---
 name: import
-description: Use when cold-starting a Stratagraph knowledge graph from an existing backlog — meeting transcripts, chat logs, wikis, specs, design docs, ADRs — and activating it. Triggers include "initial load", "backlog import", "cold start a Stratagraph project", "activate the imported graph", "write the baseline", or pointing at a corpus and asking for Stratagraph-ready documents.
+description: Use when cold-starting a Stratagraph knowledge graph from an existing corpus — meeting transcripts, chat logs, wikis, specs, design docs, ADRs — and activating it. Triggers include "initial load", "bulk import", "cold start a Stratagraph project", "activate the imported graph", "write the baseline", or pointing at a corpus and asking for Stratagraph-ready documents.
 compatibility: Requires a connected Stratagraph project MCP server (strata_import_document / strata_post_document / strata_get_graph_schema).
 ---
 
