@@ -14,24 +14,32 @@ Cold-starts a Strata project from a backlog. Runs **interactively** on your agen
 
 Gathers the previous calendar day of Slack messages, Gmail, and calendar events for a configured set of sources, assembles one dated markdown document, and posts it to the connected Strata project via `strata_post_document`. Idempotent per day (`external_id = slack-email-<date>`), so re-runs never duplicate. Writes nothing to disk. Built to run as an unattended **cloud routine** (a routine clones this repo and loads the skill from `.claude/skills/`).
 
-## Install as a plugin (interactive sessions)
+## Install
 
-To use the skill in your own Claude Code sessions (not just cloud routines), this repo doubles as a plugin marketplace:
+The skills follow the open [Agent Skills](https://agentskills.io) standard (a `SKILL.md` folder), so one copy works across every skills-compatible agent. This repo hosts them two ways.
+
+### Claude Code (plugin marketplace)
 
 ```
-/plugin marketplace add gus-schissler/strata-skills
-/plugin install stratagraph@strata-skills
+/plugin marketplace add Stratagraph/stratagraph-skills
+/plugin install stratagraph@stratagraph-skills
 /reload-plugins
 ```
 
-The plugin needs your Strata project's MCP server connected. Add it wherever you run Claude:
+Then `/stratagraph:strata-genesis` (cold-start) or `/stratagraph:daily-strata-gather` are available, and Claude invokes them automatically when a request matches. No `version` is pinned, so every commit ships as an update.
+
+### Codex, Cursor, Copilot, Gemini CLI, Goose, and other agents
+
+These agents auto-discover skills from an `.agents/skills/` directory. Point yours at this repo's copy — either clone it and symlink/copy `strata-genesis` into your `~/.agents/skills/` (or a repo-local `.agents/skills/`), or use your agent's skill installer if it supports GitHub sources (e.g. Codex's `$skill-installer`). The skill then activates automatically when you ask to cold-start a Strata project.
+
+### MCP connection (all agents)
+
+Every skill posts to Strata over MCP, so connect your project's MCP server wherever you run your agent:
 
 - **Desktop / claude.ai:** Settings → Connectors → Add custom connector, name `strata`, URL `https://stratagraph.io/api/mcp/YOURPROJECT`
-- **CLI:** `claude mcp add --transport http strata https://stratagraph.io/api/mcp/YOURPROJECT`
+- **CLI:** `claude mcp add --transport http strata https://stratagraph.io/api/mcp/YOURPROJECT` (or the equivalent for your agent)
 
-If the server flags as needing authentication, run `/mcp` and complete the OAuth sign-in once.
-
-The skill is then available as `/stratagraph:daily-strata-gather`, or Claude invokes it automatically when you ask for a daily Strata gather. Supply the same config keys (channels, timezone, etc.) in your request. No `version` is pinned, so every commit here ships as an update.
+If the server flags as needing authentication, complete the OAuth sign-in once (`/mcp` in Claude Code).
 
 ## Multiple projects
 

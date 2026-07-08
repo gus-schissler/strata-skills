@@ -1,12 +1,12 @@
 {
-  "name": "strata-skills",
+  "name": "stratagraph-skills",
   "owner": { "name": "Gus Schissler" },
-  "description": "Project-agnostic Claude Code skills for feeding a Strata knowledge graph",
+  "description": "Project-agnostic skills for feeding a Stratagraph knowledge graph",
   "plugins": [
     {
       "name": "stratagraph",
-      "source": "./plugins/daily-strata",
-      "description": "Skills for feeding a Stratagraph knowledge project over MCP. Requires your Strata project's MCP server connected, e.g. https://stratagraph.io/api/mcp/YOURPROJECT"
+      "source": "./plugins/stratagraph",
+      "description": "Skills for feeding a Stratagraph knowledge project over MCP: strata-genesis (interactive cold-start) + daily-strata-gather (daily cloud routine). Requires your Strata project's MCP server connected, e.g. https://stratagraph.io/api/mcp/YOURPROJECT"
     }
   ]
 }
