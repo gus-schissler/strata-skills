@@ -1,14 +1,18 @@
 # strata-skills
 
-Project-agnostic Claude Code skills for feeding a [Strata](https://stratagraph.io) knowledge graph, built to run as unattended **cloud routines**.
+Project-agnostic Claude Code skills for feeding a [Strata](https://stratagraph.io) knowledge graph — one for **cold-starting** a project from an existing backlog, one for **keeping it fed** as an unattended cloud routine.
 
-A routine clones this repo, loads the skill from `.claude/skills/`, reads its config from the routine prompt, and posts to whichever Strata project connector you attach. Nothing here is tied to a specific project, team, or connector, so any team can point their own routine at this repo with their own connections.
+Nothing here is tied to a specific project, team, or connector, so any team can point their own agent or routine at this repo with their own connections.
 
 ## Skills
 
+### `strata-genesis`
+
+Cold-starts a Strata project from a backlog. Runs **interactively** on your agent: sweep a corpus of transcripts, docs, and chat logs, distill each source into atom-grain claims, and publish a `genesis-import.json` bundle you drop into Strata's **Import** page — then write a *baseline document* that activates the imported history. Ships `genesis.py`, a stdlib-only helper for the deterministic parts (corpus inventory, verbatim-span validation, bundle assembly). See ADR-0077. Invoke it with `/stratagraph:strata-genesis`, or by pointing it at a corpus and asking to cold-start a Strata project.
+
 ### `daily-strata-gather`
 
-Gathers the previous calendar day of Slack messages, Gmail, and calendar events for a configured set of sources, assembles one dated markdown document, and posts it to the connected Strata project via `strata_post_document`. Idempotent per day (`external_id = slack-email-<date>`), so re-runs never duplicate. Writes nothing to disk.
+Gathers the previous calendar day of Slack messages, Gmail, and calendar events for a configured set of sources, assembles one dated markdown document, and posts it to the connected Strata project via `strata_post_document`. Idempotent per day (`external_id = slack-email-<date>`), so re-runs never duplicate. Writes nothing to disk. Built to run as an unattended **cloud routine** (a routine clones this repo and loads the skill from `.claude/skills/`).
 
 ## Install as a plugin (interactive sessions)
 
