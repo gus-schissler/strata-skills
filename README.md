@@ -1,6 +1,6 @@
 # strata-skills
 
-Project-agnostic Claude Code skills for feeding a [Strata](https://stratagraph.io) knowledge graph — one for **cold-starting** a project from an existing corpus, one for **keeping it fed** as an unattended cloud routine.
+Project-agnostic Claude Code skills for feeding a [Strata](https://stratagraph.io) knowledge graph. One **cold-starts** a project from an existing corpus. The other **keeps it fed** as an unattended cloud routine.
 
 Nothing here is tied to a specific project, team, or connector, so any team can point their own agent or routine at this repo with their own connections.
 
@@ -8,7 +8,7 @@ Nothing here is tied to a specific project, team, or connector, so any team can 
 
 ### `import`
 
-Cold-starts a Stratagraph knowledge graph from an existing corpus. Runs **interactively** on your agent: sweep a corpus of transcripts, docs, and chat logs, distill each source into atom-grain claims, and publish a `import-bundle.json` bundle you drop into Stratagraph's **Import** page — then write a *baseline document* that activates the imported history. Ships `import.py`, a stdlib-only helper for the deterministic parts (corpus inventory, verbatim-span validation, bundle assembly). See ADR-0077. Invoke it with `/stratagraph:import`, or by pointing it at a corpus and asking to cold-start a Stratagraph project.
+Cold-starts a Stratagraph knowledge graph from an existing corpus. Runs **interactively** on your agent: sweep a corpus of transcripts, docs, and chat logs, distill each source into atom-grain claims, and publish an `import-bundle.json` bundle you drop into Stratagraph's **Import** page. Then write a *baseline document* to activate the imported history. Ships `import.py`, a stdlib-only helper for the deterministic parts (corpus inventory, verbatim-span validation, bundle assembly). See ADR-0077. Invoke it with `/stratagraph:import`, or point it at a corpus and ask to cold-start a Stratagraph project.
 
 ### `gather`
 
@@ -30,7 +30,7 @@ Then `/stratagraph:import` (cold-start) or `/stratagraph:gather` are available, 
 
 ### Codex, Cursor, Copilot, Gemini CLI, Goose, and other agents
 
-These agents auto-discover skills from an `.agents/skills/` directory. Point yours at this repo's copy — either clone it and symlink/copy `import` into your `~/.agents/skills/` (or a repo-local `.agents/skills/`), or use your agent's skill installer if it supports GitHub sources (e.g. Codex's `$skill-installer`). The skill then activates automatically when you ask to cold-start a Stratagraph project.
+These agents auto-discover skills from an `.agents/skills/` directory. Point yours at this repo's copy: clone it and symlink or copy `import` into your `~/.agents/skills/` (or a repo-local `.agents/skills/`), or use your agent's skill installer if it supports GitHub sources (e.g. Codex's `$skill-installer`). The skill then activates automatically when you ask to cold-start a Stratagraph project.
 
 ### MCP connection (all agents)
 
@@ -43,7 +43,7 @@ If the server flags as needing authentication, complete the OAuth sign-in once (
 
 ## Multiple projects
 
-Strata projects are strictly isolated — one connector per project (`/api/mcp/PROJECTA`, `/api/mcp/PROJECTB`), named distinctly (e.g. `strata-projecta`). Then:
+Strata projects are strictly isolated: one connector per project (`/api/mcp/PROJECTA`, `/api/mcp/PROJECTB`), named distinctly (e.g. `strata-projecta`). Then:
 
 - **Routines:** one routine per project. Each attaches only that project's Strata connector and carries that project's config (its channels differ anyway). No ambiguity.
 - **Interactive:** if several Strata connectors are attached to one session, add `strata_project: <connector name>` to the config so the skill knows where to post. With exactly one attached, omit it.

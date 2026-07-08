@@ -441,7 +441,7 @@ def build_parser():
     inv = sub.add_parser("inventory", help="walk a corpus -> manifest JSON")
     inv.add_argument("root", help="corpus root directory")
     inv.add_argument("--exclude", action="append", default=[], help="path (relative to root) to skip; repeatable")
-    inv.add_argument("--output-dir", help="folder for inventory.json (resolved from CWD — use an absolute path so it matches `bundle`); excluded from the walk")
+    inv.add_argument("--output-dir", help="folder for inventory.json (resolved from CWD, use an absolute path so it matches `bundle`); excluded from the walk")
     inv.add_argument("--head-lines", type=int, default=20, help="lines of head peek per file (default 20)")
     inv.add_argument("--bucket", choices=["quarter", "month", "year"], help="also roll up per time bucket (the temporal-economy cost table)")
     inv.add_argument("--include-noise", action="store_true", help="do NOT skip .git/node_modules/caches (off by default)")
