@@ -1,37 +1,49 @@
-# strata-skills
+# stratagraph-skills
 
-Project-agnostic Claude Code skills for feeding a [Strata](https://stratagraph.io) knowledge graph, built to run as unattended **cloud routines**.
+Project-agnostic Claude Code skills for feeding a [Strata](https://stratagraph.io) knowledge graph. One **cold-starts** a project from an existing corpus. The other **keeps it fed** as an unattended cloud routine.
 
-A routine clones this repo, loads the skill from `.claude/skills/`, reads its config from the routine prompt, and posts to whichever Strata project connector you attach. Nothing here is tied to a specific project, team, or connector, so any team can point their own routine at this repo with their own connections.
+Nothing here is tied to a specific project, team, or connector, so any team can point their own agent or routine at this repo with their own connections.
 
 ## Skills
 
-### `daily-strata-gather`
+### `import`
 
-Gathers the previous calendar day of Slack messages, Gmail, and calendar events for a configured set of sources, assembles one dated markdown document, and posts it to the connected Strata project via `strata_post_document`. Idempotent per day (`external_id = slack-email-<date>`), so re-runs never duplicate. Writes nothing to disk.
+Cold-starts a Stratagraph knowledge graph from an existing corpus. Runs **interactively** on your agent: sweep a corpus of transcripts, docs, and chat logs, distill each source into atom-grain claims, and publish an `import-bundle.json` bundle you drop into Stratagraph's **Import** page. Then write a *baseline document* to activate the imported history. Ships `import.py`, a stdlib-only helper for the deterministic parts (corpus inventory, verbatim-span validation, bundle assembly). See ADR-0077. Invoke it with `/stratagraph:import`, or point it at a corpus and ask to cold-start a Stratagraph project.
 
-## Install as a plugin (interactive sessions)
+### `gather`
 
-To use the skill in your own Claude Code sessions (not just cloud routines), this repo doubles as a plugin marketplace:
+Gathers the previous calendar day of Slack messages, Gmail, and calendar events for a configured set of sources, assembles one dated markdown document, and posts it to the connected Stratagraph project via `strata_post_document`. Idempotent per day (`external_id = slack-email-<date>`), so re-runs never duplicate. Writes nothing to disk. Built to run as an unattended **cloud routine** (a routine clones this repo and loads the skill from `.claude/skills/`).
+
+## Install
+
+The skills follow the open [Agent Skills](https://agentskills.io) standard (a `SKILL.md` folder), so one copy works across every skills-compatible agent. This repo hosts them two ways.
+
+### Claude Code (plugin marketplace)
 
 ```
-/plugin marketplace add gus-schissler/strata-skills
-/plugin install stratagraph@strata-skills
+/plugin marketplace add Stratagraph/stratagraph-skills
+/plugin install stratagraph@stratagraph-skills
 /reload-plugins
 ```
 
-The plugin needs your Strata project's MCP server connected. Add it wherever you run Claude:
+Then `/stratagraph:import` (cold-start) or `/stratagraph:gather` are available, and Claude invokes them automatically when a request matches. No `version` is pinned, so every commit ships as an update.
+
+### Codex, Cursor, Copilot, Gemini CLI, Goose, and other agents
+
+These agents auto-discover skills from an `.agents/skills/` directory. Point yours at this repo's copy: clone it and symlink or copy `import` into your `~/.agents/skills/` (or a repo-local `.agents/skills/`), or use your agent's skill installer if it supports GitHub sources (e.g. Codex's `$skill-installer`). The skill then activates automatically when you ask to cold-start a Stratagraph project.
+
+### MCP connection (all agents)
+
+Every skill posts to Strata over MCP, so connect your project's MCP server wherever you run your agent:
 
 - **Desktop / claude.ai:** Settings → Connectors → Add custom connector, name `strata`, URL `https://stratagraph.io/api/mcp/YOURPROJECT`
-- **CLI:** `claude mcp add --transport http strata https://stratagraph.io/api/mcp/YOURPROJECT`
+- **CLI:** `claude mcp add --transport http strata https://stratagraph.io/api/mcp/YOURPROJECT` (or the equivalent for your agent)
 
-If the server flags as needing authentication, run `/mcp` and complete the OAuth sign-in once.
-
-The skill is then available as `/stratagraph:daily-strata-gather`, or Claude invokes it automatically when you ask for a daily Strata gather. Supply the same config keys (channels, timezone, etc.) in your request. No `version` is pinned, so every commit here ships as an update.
+If the server flags as needing authentication, complete the OAuth sign-in once (`/mcp` in Claude Code).
 
 ## Multiple projects
 
-Strata projects are strictly isolated — one connector per project (`/api/mcp/PROJECTA`, `/api/mcp/PROJECTB`), named distinctly (e.g. `strata-projecta`). Then:
+Strata projects are strictly isolated: one connector per project (`/api/mcp/PROJECTA`, `/api/mcp/PROJECTB`), named distinctly (e.g. `strata-projecta`). Then:
 
 - **Routines:** one routine per project. Each attaches only that project's Strata connector and carries that project's config (its channels differ anyway). No ambiguity.
 - **Interactive:** if several Strata connectors are attached to one session, add `strata_project: <connector name>` to the config so the skill knows where to post. With exactly one attached, omit it.
@@ -44,7 +56,7 @@ Strata projects are strictly isolated — one connector per project (`/api/mcp/P
 4. In the routine **prompt**, run the gather and supply your config:
 
 ```
-Run the daily-strata-gather skill for yesterday.
+Run the gather skill for yesterday.
 channels: #your-channel, #another-channel
 dm_users: Person A, Person B
 gmail_query: label:your-project

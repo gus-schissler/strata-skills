@@ -1,13 +1,14 @@
 ---
-name: daily-strata-gather
+name: gather
 description: >-
   Gather the previous day's Slack messages, Gmail, and calendar events for a
   configured set of sources and post them as one dated markdown document to
-  the connected Strata project over MCP. Built to run as an unattended
-  nightly cloud routine. Project-agnostic — posts to whichever Strata
+  the connected Stratagraph project over MCP. Built to run as an unattended
+  nightly cloud routine. Project-agnostic: posts to whichever Stratagraph
   connector is attached and reads its source config from the routine prompt.
   Trigger when a routine asks to gather yesterday's Slack / email / calendar
-  activity into Strata, or to run the daily Strata gather.
+  activity into Stratagraph, or to run the daily Stratagraph gather.
+compatibility: Requires a connected Stratagraph project MCP server (strata_post_document) plus Slack / Gmail / Calendar connectors.
 ---
 
 # daily-strata-gather
