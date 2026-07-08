@@ -1,4 +1,4 @@
-# strata-skills
+# stratagraph-skills
 
 Project-agnostic Claude Code skills for feeding a [Strata](https://stratagraph.io) knowledge graph. One **cold-starts** a project from an existing corpus. The other **keeps it fed** as an unattended cloud routine.
 
