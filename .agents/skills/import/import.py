@@ -14,10 +14,13 @@ badly:
              Skips VCS/dependency/cache noise (.git, node_modules, ...) by
              default so a real project dir doesn't drown the manifest.
   validate   check one document's distilled atoms JSON: types against the
-             fetched schema, and every span a CHARACTER-EXACT substring of the
-             document text (the verbatim-span check that agents get wrong).
+             fetched schema, 1-5 spans per atom, and every span a
+             CHARACTER-EXACT substring of the document text.
   bundle     assemble/append document+atom entries into import-bundle.json,
-             idempotent by externalId, with a resumable worklist journal.
+             idempotent by externalId, with optional explicit replacement and
+             a resumable worklist journal.
+  combine    validate and combine reviewed bundles in chronological order,
+             rejecting duplicate externalIds and writing a hash manifest.
 
 Design constraints:
   * Python 3 standard library only -- no pip installs, runs on whatever the
@@ -32,11 +35,13 @@ Usage:
                                       [--head-lines N] [--bucket quarter|month|year]
                                       [--include-noise]
   python3 import.py validate <atoms.json> --text <document> --types t1,t2,...
-  python3 import.py bundle --output-dir DIR <entry.json> [<entry.json> ...]
+  python3 import.py bundle [--replace] --output-dir DIR <entry.json> ...
+  python3 import.py combine --output-dir DIR --types t1,t2,... <bundle.json> ...
 """
 
 import argparse
 import datetime
+import hashlib
 import json
 import os
 import re
@@ -247,6 +252,46 @@ def cmd_inventory(args):
 # validate
 # ---------------------------------------------------------------------------
 
+def validate_atoms(atoms, text, allowed):
+    """Return a deterministic validation report for one document's atoms."""
+    results = []
+    ok = True
+    for i, atom in enumerate(atoms):
+        errors = []
+        warnings = []
+        if not isinstance(atom, dict):
+            errors.append("atom is not an object")
+            results.append({"index": i, "type": None, "errors": errors, "warnings": warnings})
+            ok = False
+            continue
+
+        atom_type = atom.get("type")
+        if atom_type not in allowed:
+            errors.append("type %r not in fetched schema" % (atom_type,))
+        content = atom.get("content")
+        if not isinstance(content, str) or not content.strip():
+            errors.append("empty or non-string content")
+
+        spans = atom.get("spans")
+        if not isinstance(spans, list):
+            spans = []
+        if not spans:
+            errors.append("expected 1-5 spans; found 0")
+        if len(spans) > 5:
+            errors.append("expected 1-5 spans; found %d" % len(spans))
+        for span in spans:
+            # The load-bearing check: a span that isn't a verbatim, non-empty
+            # substring degrades to null server-side.
+            if not isinstance(span, str) or span == "" or span not in text:
+                errors.append("span not verbatim in text: %r" % (short(span),))
+
+        if errors:
+            ok = False
+        results.append({"index": i, "type": atom_type, "errors": errors, "warnings": warnings})
+
+    return {"atomCount": len(atoms), "ok": ok, "atoms": results}
+
+
 def cmd_validate(args):
     try:
         with open(args.atoms, "r", encoding="utf-8") as fh:
@@ -265,46 +310,15 @@ def cmd_validate(args):
     if not isinstance(atoms, list):
         _fail("atoms JSON is not a list (or {atoms: [...]})")
         return 2
-    allowed = set(t.strip() for t in (args.types or "").split(",") if t.strip())
+    allowed = set(t.strip() for t in args.types.split(",") if t.strip())
+    if not allowed:
+        _fail("--types must contain at least one fetched type")
+        return 2
 
-    results = []
-    ok = True
-    for i, atom in enumerate(atoms):
-        errors = []
-        warnings = []
-        if not isinstance(atom, dict):
-            errors.append("atom is not an object")
-            results.append({"index": i, "type": None, "errors": errors, "warnings": warnings})
-            ok = False
-            continue
-
-        atom_type = atom.get("type")
-        if allowed and atom_type not in allowed:
-            errors.append("type %r not in fetched schema" % (atom_type,))
-        content = atom.get("content")
-        if not isinstance(content, str) or not content.strip():
-            errors.append("empty or non-string content")
-
-        spans = atom.get("spans")
-        if not isinstance(spans, list):
-            spans = []
-        if not spans:
-            warnings.append("no spans (server stores no receipt)")
-        if len(spans) > 5:
-            warnings.append("more than 5 spans")
-        for span in spans:
-            # The load-bearing check: a span that isn't a verbatim, non-empty
-            # substring degrades to null server-side -- a silently lost receipt.
-            if not isinstance(span, str) or span == "" or span not in text:
-                errors.append("span not verbatim in text: %r" % (short(span),))
-
-        if errors:
-            ok = False
-        results.append({"index": i, "type": atom_type, "errors": errors, "warnings": warnings})
-
-    report = {"document": args.text, "atomCount": len(atoms), "ok": ok, "atoms": results}
+    report = validate_atoms(atoms, text, allowed)
+    report["document"] = args.text
     _print_json(report)
-    return 0 if ok else 1
+    return 0 if report["ok"] else 1
 
 
 # ---------------------------------------------------------------------------
@@ -339,30 +353,42 @@ def cmd_bundle(args):
     journal = _load_json(journal_path, {"entries": {}})
     if not isinstance(journal, dict) or not isinstance(journal.get("entries"), dict):
         journal = {"entries": {}}
-    seen = set(
-        d.get("document", {}).get("externalId")
-        for d in bundle["documents"]
-        if isinstance(d, dict) and isinstance(d.get("document"), dict)
-    )
+    seen = {}
+    for index, existing in enumerate(bundle["documents"]):
+        if isinstance(existing, dict) and isinstance(existing.get("document"), dict):
+            ext_id = existing["document"].get("externalId")
+            if ext_id:
+                seen[ext_id] = index
 
-    added, skipped = 0, 0
+    added, replaced, skipped, invalid = 0, 0, 0, 0
     for entry_path in args.entries:
         entry = _load_json(entry_path, None)
         if not isinstance(entry, dict) or not isinstance(entry.get("document"), dict):
             _warn("skipping entry with missing/invalid document: %s" % entry_path)
+            invalid += 1
             continue
         ext_id = entry["document"].get("externalId")
         if not ext_id:
             _warn("skipping entry with no externalId: %s" % entry_path)
+            invalid += 1
             continue
+        if not isinstance(entry.get("atoms"), list):
+            _warn("skipping entry with missing/invalid atoms: %s" % entry_path)
+            invalid += 1
+            continue
+        payload = {"document": entry["document"], "atoms": entry["atoms"]}
         if ext_id in seen:
-            skipped += 1
-            journal["entries"][ext_id] = {"status": "already-in-bundle"}
+            if args.replace:
+                bundle["documents"][seen[ext_id]] = payload
+                journal["entries"][ext_id] = {"status": "replaced", "atoms": len(entry["atoms"])}
+                replaced += 1
+            else:
+                skipped += 1
+                journal["entries"][ext_id] = {"status": "already-in-bundle"}
             continue
-        atoms = entry.get("atoms") if isinstance(entry.get("atoms"), list) else []
-        bundle["documents"].append({"document": entry["document"], "atoms": atoms})
-        seen.add(ext_id)
-        journal["entries"][ext_id] = {"status": "bundled", "atoms": len(atoms)}
+        bundle["documents"].append(payload)
+        seen[ext_id] = len(bundle["documents"]) - 1
+        journal["entries"][ext_id] = {"status": "bundled", "atoms": len(entry["atoms"])}
         added += 1
 
     _write_json(bundle_path, bundle)
@@ -376,8 +402,152 @@ def cmd_bundle(args):
         "documents": len(bundle["documents"]),
         "atoms": total_atoms,
         "addedThisRun": added,
+        "replacedThisRun": replaced,
         "skippedAlreadyPresent": skipped,
+        "skippedInvalid": invalid,
     })
+    return 1 if invalid else 0
+
+
+# ---------------------------------------------------------------------------
+# combine
+# ---------------------------------------------------------------------------
+
+def _sha256(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _occurred_sort_key(value):
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("occurredAt is missing")
+    raw = value.strip()
+    normalized = raw[:-1] + "+00:00" if raw.endswith("Z") else raw
+    try:
+        if "T" in normalized:
+            parsed = datetime.datetime.fromisoformat(normalized)
+        else:
+            parsed = datetime.datetime.strptime(normalized, "%Y-%m-%d")
+    except ValueError:
+        raise ValueError("occurredAt is not an ISO date or datetime: %r" % raw)
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=datetime.timezone.utc)
+    else:
+        parsed = parsed.astimezone(datetime.timezone.utc)
+    return parsed, raw
+
+
+def cmd_combine(args):
+    allowed = set(t.strip() for t in args.types.split(",") if t.strip())
+    if not allowed:
+        _fail("--types must contain at least one fetched type")
+        return 2
+
+    out_dir = os.path.abspath(args.output_dir)
+    output_bundle = os.path.join(out_dir, "import-bundle.json")
+    input_paths = [os.path.abspath(path) for path in args.bundles]
+    if output_bundle in input_paths:
+        _fail("combined output must use a different directory from every input bundle")
+        return 2
+
+    combined = []
+    parents = []
+    seen = {}
+    errors = []
+
+    for path in input_paths:
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                bundle = json.load(fh)
+            parent_hash = _sha256(path)
+        except (OSError, IOError, ValueError) as exc:
+            errors.append({"bundle": path, "error": "could not read bundle: %s" % exc})
+            continue
+        documents = bundle.get("documents") if isinstance(bundle, dict) else None
+        if not isinstance(documents, list):
+            errors.append({"bundle": path, "error": "bundle has no documents[] array"})
+            continue
+
+        parent_atoms = 0
+        for index, entry in enumerate(documents):
+            label = "%s document %d" % (path, index)
+            if not isinstance(entry, dict) or not isinstance(entry.get("document"), dict):
+                errors.append({"bundle": path, "index": index, "error": "invalid document entry"})
+                continue
+            document = entry["document"]
+            atoms = entry.get("atoms")
+            ext_id = document.get("externalId")
+            if not isinstance(ext_id, str) or not ext_id:
+                errors.append({"bundle": path, "index": index, "error": "missing externalId"})
+                continue
+            if ext_id in seen:
+                errors.append({
+                    "bundle": path,
+                    "index": index,
+                    "error": "duplicate externalId %r; first seen in %s" % (ext_id, seen[ext_id]),
+                })
+                continue
+            missing = [
+                field for field in ("name", "source", "text")
+                if not isinstance(document.get(field), str) or not document.get(field)
+            ]
+            if missing:
+                errors.append({"bundle": path, "index": index, "error": "missing document fields: %s" % ", ".join(missing)})
+                continue
+            try:
+                sort_key = _occurred_sort_key(document.get("occurredAt"))
+            except ValueError as exc:
+                errors.append({"bundle": path, "index": index, "error": str(exc)})
+                continue
+            if not isinstance(atoms, list):
+                errors.append({"bundle": path, "index": index, "error": "atoms is not a list"})
+                continue
+            validation = validate_atoms(atoms, document["text"], allowed)
+            if not validation["ok"]:
+                errors.append({"bundle": path, "index": index, "externalId": ext_id, "validation": validation})
+                continue
+            seen[ext_id] = label
+            parent_atoms += len(atoms)
+            combined.append((sort_key, ext_id, entry))
+
+        parents.append({
+            "path": path,
+            "sha256": parent_hash,
+            "documents": len(documents),
+            "atoms": parent_atoms,
+        })
+
+    if errors:
+        _print_json({"ok": False, "errors": errors})
+        return 1
+
+    combined.sort(key=lambda item: (item[0], item[1]))
+    output = {"version": 1, "documents": [item[2] for item in combined]}
+    try:
+        os.makedirs(out_dir, exist_ok=True)
+        _write_json(output_bundle, output)
+        manifest_path = os.path.join(out_dir, "combined-manifest.json")
+        total_atoms = sum(len(entry.get("atoms", [])) for entry in output["documents"])
+        manifest = {
+            "version": 1,
+            "generatedBy": "import.py combine",
+            "parents": parents,
+            "combined": {
+                "path": output_bundle,
+                "sha256": _sha256(output_bundle),
+                "documents": len(output["documents"]),
+                "atoms": total_atoms,
+            },
+        }
+        _write_json(manifest_path, manifest)
+    except (OSError, IOError) as exc:
+        _fail("could not write combined bundle: %s" % exc)
+        return 2
+
+    _print_json({"ok": True, "bundle": output_bundle, "manifest": manifest_path, "documents": len(output["documents"]), "atoms": total_atoms})
     return 0
 
 
@@ -450,13 +620,20 @@ def build_parser():
     val = sub.add_parser("validate", help="check one document's atoms JSON (types + verbatim spans)")
     val.add_argument("atoms", help="atoms JSON file: [ ... ] or { atoms: [ ... ] }")
     val.add_argument("--text", required=True, help="the document text the spans must match verbatim")
-    val.add_argument("--types", help="comma-separated allowed node types (from the fetched schema)")
+    val.add_argument("--types", required=True, help="comma-separated allowed node types (from the fetched schema)")
     val.set_defaults(func=cmd_validate)
 
     bun = sub.add_parser("bundle", help="assemble/append entries into import-bundle.json")
     bun.add_argument("--output-dir", required=True, help="folder holding import-bundle.json + worklist.json")
+    bun.add_argument("--replace", action="store_true", help="replace an existing entry with the same externalId")
     bun.add_argument("entries", nargs="+", help="entry JSON files: { document: {...}, atoms: [...] }")
     bun.set_defaults(func=cmd_bundle)
+
+    com = sub.add_parser("combine", help="validate and combine reviewed bundles")
+    com.add_argument("--output-dir", required=True, help="new folder for import-bundle.json + combined-manifest.json")
+    com.add_argument("--types", required=True, help="comma-separated allowed node types (from the fetched schema)")
+    com.add_argument("bundles", nargs="+", help="reviewed import-bundle.json files")
+    com.set_defaults(func=cmd_combine)
     return p
 
 
