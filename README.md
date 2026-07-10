@@ -8,7 +8,7 @@ Nothing here is tied to a specific project, team, or connector, so any team can 
 
 ### `import`
 
-Cold-starts a Stratagraph knowledge graph from an existing corpus. Runs **interactively** on your agent: sweep a corpus of transcripts, docs, and chat logs, distill each source into atom-grain claims, and publish an `import-bundle.json` bundle you drop into Stratagraph's **Import** page. Then write a *baseline document* to activate the imported history. Ships `import.py`, a stdlib-only helper for the deterministic parts (corpus inventory, verbatim-span validation, bundle assembly). See ADR-0077. Invoke it with `/stratagraph:import`, or point it at a corpus and ask to cold-start a Stratagraph project.
+Cold-starts a new or empty Stratagraph graph from existing sources. The agent first explains the process and agrees the scope with you. It then inventories the approved sources, extracts small claims with exact source text, and prepares an import review report and `import-bundle.json` file. After you import and review that history, the agent helps write a current-state document that connects what still matters. `import.py` handles inventory, strict source validation, reviewed-entry replacement, bundle assembly, and deterministic combination of separately reviewed bundles. Invoke the skill with `/stratagraph:import`, or point it at a source collection and ask to cold-start a Stratagraph project. Do not use it for routine ingestion or posting one document.
 
 ### `gather`
 

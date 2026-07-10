@@ -1,114 +1,240 @@
 ---
 name: import
-description: Use when cold-starting a Stratagraph knowledge graph from an existing corpus (meeting transcripts, chat logs, wikis, specs, design docs, ADRs) and activating it. Triggers include "initial load", "bulk import", "cold start a Stratagraph project", "activate the imported graph", "write the baseline", or pointing at a corpus and asking for Stratagraph-ready documents.
-compatibility: Requires a connected Stratagraph project MCP server (strata_import_document / strata_post_document / strata_get_graph_schema).
+description: Cold-start a new or empty Stratagraph graph from existing sources and activate it with reviewed current-state documents. Use for initial loads, bulk imports, or baseline creation from transcripts, chats, wikis, specifications, design documents, architecture decisions, implementation records, and similar collections. Do not use for routine ingestion, posting one document, or updating an active graph.
 ---
 
-# Import: corpus → dormant graph → activated by baseline documents
+# Cold-start a Stratagraph project
 
-Cold-starting a project is **two acts, one session**:
+An import has 2 parts:
 
-- **Act 1: the dormant past.** Sweep the corpus, distill each source into atoms, and publish an import **bundle**. Atoms land baked but **dormant** (`imported`, disconnected). Treat this as evidence for a human-reviewed graph: a wrong claim here becomes trusted graph truth until someone finds it.
-- **Act 2: the present.** The user loads a few **Strata baseline documents** (current-state write-ups, structured the way *they* need) through the normal **gated** path. Their atoms drain against the dormant history and light it up.
+1. Extract small, source-backed claims from the project's history. Stratagraph stores them without graph connections.
+2. Create a reviewed current-state document. Stratagraph uses it to connect the history that still matters.
 
-## Rules that don't bend
+The work may span several sessions. Use the reports, entry files, bundle, and worklist to resume safely.
 
-- **Fetch the contract, don't remember it.** The per-atom payload shape, the six tier-1 node types, and the grain rule live in the `strata_import_document` tool description; `strata_get_graph_schema` has the live taxonomy. Read them while you build; if they disagree with this skill, they win. Never hard-code the type list from memory.
-- **Iron Rule: derivatives steer, never source.** Never distill atoms from LLM artifacts (assertion logs, AI summaries, agent notes). Use them only as a coverage map or recall checklist. Signs of a derivative: `extracted_at`/`assertion_count`/confidence frontmatter, per-claim lens taxonomies, "summary" in the path, or a generator script beside it. Exception: a doc the **user vouches** as human-authored. This rule holds in Act 2 too: a baseline is LLM-authored, but it's safe only because it's **gated** *and* every claim is **grounded in a retrieved atom**.
-- **One claim per atom.** A statement fusing four decisions and an action is five atoms. Compound atoms are unadjudicatable and unbindable.
-- **Spans are copied verbatim.** Each atom carries 1–5 quote fragments lifted character-for-character; the server re-snaps and stores verbatim-or-null, so a paraphrased span is a silently lost receipt.
-- **Never guess a date or a speaker.** Resolve or flag (ladder below); omit an unattributed speaker.
-- **Never merge across documents.** Restatements land dormant; the drain's `supports` is the dedup, not you.
+## Explain the process before using tools
 
-## Provenance classes
+On the first turn, explain the process before you inspect files or call tools. This may be the user's first experience of Stratagraph.
 
-| Class | What qualifies | Use |
-|---|---|---|
-| **Witnessed** | Transcripts and chat logs: humans speaking in time. Verbatim ASR ranks above AI notes (record the notch-down). | Primary source: the spine. |
-| **Unverified-authorship** | Every other doc (wikis, specs, PRDs, "ADRs"), however human it looks | Primary source; record the class so the reviewer can upgrade known-human docs. |
-| **Machine-derivative** | Assertion logs, AI summaries, agent notes | Steer only; never distilled (vouched exception). |
+The first response must:
 
-Don't attempt authorship detection. Classify conservatively and let the manifest pass resolve it.
+- preview all 5 stages below
+- separate decisions needed before extraction from decisions that can wait
+- say that a location does not approve everything inside it
+- end with one source or exclusion question adapted to what the user already said
 
-## Inputs + levers (collect once, up front: strong defaults, not a form)
+Do not select source categories, announce an inventory plan, or promise to use the whole location before the user answers. Do not use *bundle*, *baseline*, *dormant*, *bake*, or *drain* in the first response.
 
-Basics: corpus root(s) + exclusions · output folder (default `<root>/_import/`; use one **absolute** path for every `import.py` command; always excluded from the sweep) · engagement name + date span · the corpus-relative path convention (each doc's `externalId`, the idempotency key) · any user-vouched docs.
+Cover these stages in plain language:
 
-Levers:
-- **Scope:** which sources, how far back. *Default: everything.*
-- **Extraction strategy:** `doc-by-doc` (faithful, most atoms) or `temporal-economy` (bucket by time, coarser, fewer atoms). *Default: doc-by-doc.*
-- **Materiality floor:** distill what still binds (decisions, constraints, risks, open questions), not every utterance. *Default: still-binds.* Volume is reported, never capped.
+1. **Choose sources.** Agree what to include and leave out.
+2. **Check the size.** Inventory the approved locations and estimate the work.
+3. **Extract and verify.** Keep each claim small and link it to exact source text.
+4. **Review and import.** Give the user an import review report and import file. Nothing reaches Stratagraph before approval.
+5. **Connect current knowledge.** Help the user write a short current-state document after import.
 
-Run on the best model available (**Opus-tier recommended, Sonnet-class floor**) for distill and synthesis alike. Subtly wrong baked claims are the worst failure. Record the model and contract version (**v0.5**) in the sweep report.
+Explain which decisions are needed now and which can wait:
 
----
+- Decide sources, exclusions, detail, date handling, and use of parallel workers before extraction.
+- Decide the structure and content of the current-state document after import.
 
-# Act 1: build the dormant past
+Use familiar words in conversation. Say *import file* instead of *bundle* and *import review report* instead of `sweep-report.md`. If you use *atom*, explain that it means one small claim. If you use *baseline*, explain that it means a reviewed current-state document.
 
-Steps run in order. Nothing is uploaded until dates are resolved and the sweep report is approved.
+Adapt your first question to the request:
 
-1. **Inventory → STOP.** Run `python3 import.py inventory <root> --output-dir <out>`. It walks the tree (skipping `.git`/`node_modules`/caches by default) and writes the manifest to `<out>/inventory.json` (paths, sizes, `chars/4` tokens, head peeks, date and derivative *signals*). A compact summary prints to stdout. Read the manifest and **classify** each file by provenance and read or skip. These are signals, not verdicts. Present the plan and **wait for go-ahead before reading content.**
+- When scope is unclear, ask: **Which files, folders, or exports should I include? Is there anything I should leave out?**
+- When the user already gave a precise scope, restate it and ask only for confirmation or exclusions.
 
-2. **Temporal bucketing and cost table** *(temporal-economy only; else skip).* Re-run with `--bucket quarter|month|year` for the per-bucket rollup (`byBucket`; undated → a catch-all, don't guess). Show `bucket · #docs · est. tokens`; the user picks **full / coarse / skip** per bucket. Coarse still **reads every doc**. It distills the *period* into fewer atoms (the expensive output side); reading a summary to save input would break the Iron Rule.
+A repository, folder, or export identifies a location. It does not give permission to use everything inside it.
 
-3. **Distill each source.** `full` → worker-per-doc; `coarse` → worker-per-bucket. Read → distill → verify **in one session, source in context** (distilling from memory is the confabulation vector). Per atom: one claim · a fetched tier-1 type · 1–5 verbatim spans · optional speaker/sectionLabel. **Resolve the doc's `occurredAt`**: filename → content → user-supplied span; unresolvable → flag it, **never guess** (load-bearing for import order and the drain's chronology). **Verify** with `python3 import.py validate <atoms.json> --text <doc> --types <fetched>` (non-zero exit = bad type or non-verbatim span), then **append** the `{document, atoms}` entry with `python3 import.py bundle --output-dir <out> <entry.json>` (idempotent by `externalId`; `worklist.json` is the resume journal). Files over ~50KB: chunk sequentially.
+## Confirm the target and agree the plan
 
-   ```
-   { "version": 1, "documents": [ {
-     "document": { "externalId", "name", "occurredAt", "source", "text", "participants"? },
-     "atoms": [ { "type", "content", "speaker"?, "spans"?, "sectionLabel"? } ]
-   } ] }
-   ```
-   Each entry is exactly the `strata_import_document` payload (minus `projectId`/`userId`).
+Complete this preflight after the user understands the process.
 
-4. **Recall-check.** *After* all primary sources are distilled, open derivatives as a **miss-list** only: any gap → distill from the *primary* source; no primary → "unconfirmed" appendix, never an atom.
+### Confirm the target project
 
-5. **Sweep report → review gate.** Write `sweep-report.md` (files read/skipped · per-doc & per-bucket counts + total · span coverage · people roster · provenance manifest · undated flags · unconfirmed appendix · extraction mode · bundle path + totals · model + v0.5) and **have the user review it before upload.**
+Identify the connected Stratagraph project. Confirm with the user that it is the intended target.
 
-6. **Upload.** After approval, the user drops `import-bundle.json` on Strata's **Import** page. The browser route publishes each doc oldest-first by `occurredAt`, so the large text never rides through a model. Atoms land **dormant**; the importer writes no edges.
+Use authoritative project metadata or an exhaustive node count or list to confirm that the graph is new or empty. One search with no results is not proof. If tools cannot confirm the state, ask the user to confirm it. Stop if the graph is active; this skill is not an update workflow.
 
-7. **Wait to embed.** Act 2 searches the imported atoms, so they must embed first: ~**1 min per 300 atoms**. Fill the wait with step 8 (the user picks a structure + fills in info); a `strata_search_nodes` on a known topic confirms readiness.
+### Check the required tools
 
----
+For extraction, require:
 
-# Act 2: assert the present (baseline documents)
+- the description and input schema for `strata_import_document`
+- `strata_get_graph_schema`
 
-The dormant graph has no edges, so there are no clusters to structure from. **The user supplies the structure and substance; you ground it.**
+Inspect the `strata_import_document` tool description. Do not invoke the tool to read its contract.
 
-8. **Structure.** Offer: **single · by product/feature · by workstream/domain · custom** (keep it few, never sprint-by-sprint). The user picks and **fills in the required info** (e.g. by-product → their product list and key current facts each).
+For the current-state document, require:
 
-9. **Ground** each baseline with `strata_search_nodes` / `strata_get_node(s)` / `strata_list_*`, **not `strata_traverse`** (no edges to walk). Pull the atoms behind the user's points, catch gaps, judge recency by `occurred_at`, and surface genuine conflicts rather than guessing.
+- `strata_search_nodes`
+- node retrieval tools such as `strata_get_node` or `strata_get_nodes`
+- relevant `strata_list_*` tools
+- `strata_post_document`
 
-10. **Draft** each baseline **normally**: clear current-state prose (no present-tense gymnastics) covering what's in force, what changed, and open questions. Every substantive claim cites the retrieved node key. Keep it tight; a re-list of history just floods self-`supports`.
+If a required tool is missing, explain what is missing and offer setup help before that phase.
 
-11. **Review → post.** Show each baseline concisely; the user reacts and corrects (not a wall of text). Post each with `strata_post_document`. It lands as a normal doc, extracts, and **stops at the gate** for review before bake. On bake it drains against the dormant history and activates it. Idempotent by `externalId` (`_import/baseline-<slug>.md`).
-    - **No MCP connected?** Offer setup instructions, or write `baseline-<slug>.md` and have the user upload it the normal way: same gate and activation.
+### Agree the import plan
 
----
+Collect the plan through conversation. Make recommendations and ask one or 2 questions at a time.
 
-## Helpers + how distill is dispatched
+Agree:
 
-[`import.py`](import.py) is stdlib-only Python (no installs, no network, no LLM): deterministic mechanics you shell out to, available on **every** rung:
-- `inventory <root> [--output-dir D] [--bucket quarter|month|year]`: walk → manifest (plus per-bucket cost rollup); skips `.git`/`node_modules`/caches by default (`--include-noise` to keep them).
-- `validate <atoms.json> --text <doc> --types <t,…>`: type and verbatim-span check; non-zero exit on a violation.
-- `bundle --output-dir D <entry.json> …`: append entries into `import-bundle.json` (idempotent) and `worklist.json`.
+- what to include and leave out
+- which source groups to process now or later
+- the date range
+- how to resolve missing dates
+- the level of detail
+- the output folder and `externalId` path convention
+- sequential work or user-approved parallel workers
 
-The **distill** (the LLM judgment) is the agent's, not the script's. Dispatch it at the highest rung available:
+Use `<root>/_import/` as the default output folder and exclude it from inventory.
 
-1. **Workflow tool** → fan out per-doc (or per-bucket) distill workers in parallel; validate each with `import.py validate`; the orchestrator assembles via `import.py bundle`.
-2. **Subagent dispatch** → per-worker distill subagents; the **orchestrator alone** owns the worklist, recall-check, and all of Act 2. Workers inherit the run's model; never a cheaper one.
-3. **Neither** → a sequential read → distill → validate → bundle loop; the `worklist.json` is the resume journal.
+Recommend these defaults:
 
-Act 2 is orchestrator-driven in every case (search → draft → review → post; no fan-out).
+- Start with a small pass for a mixed collection.
+- Process source groups separately when they need different evidence rules.
+- Use `doc-by-doc` extraction for the most faithful result.
+- Keep decisions, constraints, risks, open questions, and facts that still matter. Call this the `still-binds` level in technical notes only.
+- Use parallel workers only with the user's approval.
 
-## Stop signals
+Use the strongest configured model that can handle long sources, exact citations, and careful synthesis. If the available model is not suitable, tell the user before extraction. Use the same capability level for workers.
 
-- Distilling from a derivative (`extracted_at`/confidence frontmatter, unvouched claim-shaped doc), or coarse mode about to read a summary instead of the source docs.
-- An atom carrying a speaker/detail its source can't support, fusing two claims, or merged across documents.
-- A span that isn't a character-exact copy of the `text`.
-- A baseline claim you can't point to a retrieved atom for, structure you inferred from the graph instead of asking, or a `strata_traverse` call (no edges yet).
-- A guessed date.
+Summarize the plan with user-facing labels:
 
-## What's new in v0.5
+- What I will include
+- What I will leave out
+- How I will handle missing dates
+- How detailed the result will be
+- Where I will write the import files
+- How I will run the work
 
-Act 2 (baseline documents → gated activation, ADR-0077) · the `temporal-economy` extraction lever (per-bucket cost table; coarse trades output atoms, not reads) · Act 2 is user-led (no clustering pre-activation) via search/get/list. The Act-1 distill contract is unchanged from v0.4.
+Ask for approval to inventory. Explain that inventory reads filenames, metadata, and a small sample from each file. It does not read full files or change the source collection.
+
+## Follow the evidence rules
+
+Before classifying inventory entries or extracting claims, read [references/evidence.md](references/evidence.md).
+
+Always:
+
+- inspect the live tool schema and taxonomy instead of using a remembered type list
+- put one claim in each atom
+- copy 1 to 5 exact supporting spans from the same source
+- include a speaker only when the source identifies them
+- keep claims from different documents separate
+- use machine-written narrative only to find gaps in primary evidence
+
+Use `occurredAt` for the date represented by the source. Resolve it in this order:
+
+1. A date in the source text that clearly represents the document or event
+2. A trustworthy date in the filename
+3. A user-approved metadata source, such as the first git commit
+4. A date supplied by the user
+
+Inventory date signals are only candidates. Do not use a file modification time as the source date unless the user approves it.
+
+Do not upload a document with an unresolved date. Ask the user to resolve it or leave the document out and record it in the report.
+
+Record the model and contract version in the report. Record `unknown` when the live contract does not state a version.
+
+## Part 1: prepare and review the import
+
+Read [references/technical.md](references/technical.md) before running `import.py`, assigning workers, or assembling bundles.
+
+### 1. Inventory the approved sources
+
+Run inventory only after preflight approval. Use the manifest to classify each file as read or skip. Treat date and machine-content signals as clues, not decisions.
+
+Show the user:
+
+- proposed sources and exclusions
+- date-resolution plan
+- estimated input size
+- execution plan
+
+Stop and ask for approval before reading full source files. Revise the plan if inventory reveals a different collection than expected.
+
+For `temporal-economy`, follow the selection and output rules in the technical reference. Show document and token estimates by month, quarter, or year. Ask the user to mark each period as full, coarse, or skip. Coarse extraction must still read every primary document and keep claims separated by source.
+
+### 2. Extract and validate each source
+
+Read, extract, and verify each source while it remains in context. Process files over about 50 KB in order, one section at a time.
+
+Write a separate entry file for each document. Validate it with the live comma-separated type list. Add a reviewed entry to its source-group bundle.
+
+Validation must fail for an invalid type, empty content, fewer than 1 or more than 5 spans, or a span that is not an exact source substring.
+
+### 3. Check gaps and review quality
+
+After primary sources are processed, use machine-written material only as a gap checklist. Return to primary evidence for any missing claim. Put unsupported topics in an unconfirmed appendix.
+
+Review a sample from every source group and the documents with the most claims. Split, narrow, retype, or remove claims that are compound, weak, outdated, or limited to one-time implementation detail.
+
+When review changes an entry that is already bundled:
+
+1. Validate the changed entry again.
+2. Replace it with `bundle --replace`.
+3. Confirm that `worklist.json` records the replacement.
+
+### 4. Prepare the report and import files
+
+Write `sweep-report.md` with source coverage, skipped files, claim and span counts, date decisions, source classes, unconfirmed topics, quality findings, important gaps, model details, contract version, and bundle paths.
+
+Include a direct assessment of source support, one-claim quality, relevance, chronology, and coverage. Recommend a manageable human spot-check.
+
+Keep separate review bundles for source groups with different origins or evidence rules. Use `import.py combine` to create one upload bundle in a new directory after the user approves every parent bundle. Keep the parent bundles and generated hash manifest.
+
+### 5. Review, import, and wait for search
+
+Ask the user to review the import review report. Do not upload before approval.
+
+After approval, the user can drop `import-bundle.json` on the Stratagraph Import page. The page publishes documents from oldest to newest. Imported claims still have no graph edges.
+
+Embedding time varies. About 1 minute for every 300 claims is only a rough estimate. A successful `strata_search_nodes` query for a known topic is the readiness check.
+
+## Part 2: create the current-state document
+
+Imported claims have no graph edges. The user must choose the structure and provide the current facts.
+
+### 1. Choose a structure
+
+Offer a small set of choices:
+
+- one overview
+- one document for each product or feature
+- one document for each workstream or domain
+- a custom structure
+
+Avoid one document for every sprint. Ask for the names and current facts needed for the chosen structure.
+
+### 2. Find supporting evidence
+
+Use search, get, and list tools. Do not use `strata_traverse` before the graph has edges.
+
+Find evidence for the user's facts. Compare dates, identify gaps, and show genuine conflicts instead of resolving them by guesswork.
+
+### 3. Draft, review, and post
+
+Write focused prose that covers what is in force, what changed, and what remains open. Cite the retrieved node key for every factual claim.
+
+Show each draft to the user and ask for corrections. After approval, post it with `strata_post_document`. Use `_import/baseline-<slug>.md` as its `externalId`.
+
+The document must pass the normal Stratagraph review gate. After approval there, Stratagraph connects it to relevant imported history.
+
+If search or retrieval tools are unavailable, stop and offer setup help. Do not describe an ungrounded draft as evidence-backed. If the user chooses a manual path, use only facts they explicitly provide and ask them to verify every claim before upload.
+
+## Stop and correct these problems
+
+- The target project is not confirmed as new or empty.
+- A mutating import tool is being invoked to inspect its schema.
+- Machine-written narrative is being used as evidence.
+- Coarse extraction is using summaries instead of primary documents.
+- A claim contains more than one idea.
+- A speaker, detail, or span is not supported exactly by the source.
+- Claims from different documents have been merged.
+- A source date is unresolved or guessed.
+- A reviewed change was not validated and replaced in the bundle.
+- A current-state claim has no retrieved evidence.
+- The current-state structure was inferred instead of agreed with the user.
+- `strata_traverse` is being used before the graph has edges.
