@@ -1,53 +1,60 @@
 ---
 name: gather
 description: >-
-  Gather the previous day's Slack messages, Gmail, and calendar events for a
-  configured set of sources and post them as one dated markdown document to
-  the connected Stratagraph project over MCP. Built to run as an unattended
+  Gather Slack messages, Gmail messages, and calendar events from the previous
+  calendar day for a configured set of sources. Post them as one dated Markdown
+  document to the connected Stratagraph project over MCP. Runs as an unattended
   nightly cloud routine. Project-agnostic: posts to whichever Stratagraph
-  connector is attached and reads its source config from the routine prompt.
-  Trigger when a routine asks to gather yesterday's Slack / email / calendar
-  activity into Stratagraph, or to run the daily Stratagraph gather.
-compatibility: Requires a connected Stratagraph project MCP server (strata_post_document) plus Slack / Gmail / Calendar connectors.
+  connector is attached and reads its source configuration from the routine
+  prompt. Trigger when a routine asks to gather yesterday's Slack, email, and
+  calendar activity into Stratagraph, or to run the daily Stratagraph gather.
+  Do not use for ad hoc searches or manual imports.
+compatibility: >-
+  Requires a connected Stratagraph project MCP server (`strata_post_document`)
+  and Slack, Gmail, and Calendar connectors.
 ---
 
-# daily-strata-gather
+# Gather daily activity
 
-Assemble one calendar day of team activity (Slack + Gmail + Calendar) into a single markdown document and post it to Strata over MCP. Built for an unattended nightly cloud routine. Writes nothing to disk.
+Gather one calendar day of Slack messages, Gmail messages, and calendar events. Post them to Stratagraph as one Markdown document over MCP. This skill runs as an unattended nightly cloud routine and writes nothing to disk.
 
-## Project-agnostic by design
+## Choose tools and sources at runtime
 
-- **Destination.** Post to whichever Strata connector is attached to this routine. Use the tool whose name ends in `strata_post_document`. Never assume a specific project, server URL, or connector UUID. If more than one Strata connector is attached, use the one named by `strata_project`; if that isn't set, stop and report the ambiguity rather than guessing.
-- **Tools by suffix.** Refer to every connector tool by its suffix, not its UUID prefix: `slack_read_channel`, `slack_read_thread`, `slack_read_user_profile`, `slack_search_*`, Gmail `search_threads` / `get_thread`, Calendar `list_events`. Use whatever Slack / Gmail / Calendar connector the routine has attached.
-- **Sources from config.** Read the config below from the routine prompt. Nothing about any specific team, channel, or person is baked into this skill.
+- **Choose the destination.** Post to the Stratagraph connector attached to the routine. Use the tool whose name ends in `strata_post_document`. Never assume a specific project, server URL, or connector UUID. If more than one Stratagraph connector is attached, use the connector named by `strata_project`. If `strata_project` is missing, stop and report that it is required.
+- **Choose tools by suffix.** Refer to connector tools by their suffixes, not their UUID prefixes. Use `slack_read_channel`, `slack_read_thread`, `slack_read_user_profile`, and `slack_search_*` for Slack. Use `search_threads` and `get_thread` for Gmail. Use `list_events` for Calendar. Use the matching tools from the connectors attached to the routine.
+- **Read sources from the configuration.** Read the configuration below from the routine prompt. Do not hard-code a team, channel, or person in this skill.
 
-## Config (supplied by the routine prompt)
+If a required connector or tool is unavailable, stop and name it in the routine transcript.
+
+## Read the routine configuration
+
+`channels` and `timezone` are required. If either is missing, stop and report which field the routine prompt must supply.
 
 - `channels` (required): Slack channels to read, by name or ID.
-- `dm_users` (optional): people whose DMs with you to include.
-- `gmail_query` (optional): Gmail search string identifying relevant mail (a label, sender set, or terms). Omit to skip email.
-- `timezone` (required): IANA tz for the day window, e.g. `America/New_York`.
-- `title_prefix` (optional): document title label. Default `Slack & email log`.
-- `strata_project` (optional): which Strata connector to post to, by connector name, when more than one is attached. Unnecessary when exactly one is attached.
+- `timezone` (required): IANA time zone for the day window. For example, `America/New_York`.
+- `dm_users` (optional): people whose direct messages with the connected Slack account to include.
+- `gmail_query` (optional): Gmail search string that identifies relevant messages, such as a label, set of senders, or search terms. Omit it to skip email.
+- `title_prefix` (optional): document title label. The default is `Slack & email log`.
+- `strata_project` (optional): Stratagraph connector name. It is required when more than one Stratagraph connector is attached. Omit it when exactly one is attached.
 
-## Steps
+## Gather and post the activity
 
-1. **Window.** Using the current date in `timezone`, set the target to the full previous calendar day, 00:00 to 23:59:59 local. Call it `DATE` (YYYY-MM-DD).
-2. **Slack.** For each channel in `channels`, read messages inside the window. Expand any thread that has replies. If `dm_users` is set, include those DMs for the same window.
-3. **Attribution.** Resolve author display names with `slack_read_user_profile` per user id. For Slack Connect or external messages with no resolvable sender, look them up best-effort; if still unknown, label `Unknown (external)`. Never fabricate a name.
-4. **Gmail.** If `gmail_query` is set, search it restricted to the window and include each matching thread's relevant messages (sender, time, subject, gist). Skip firmwide or automated noise.
-5. **Calendar.** List events in the window. Include title, time, attendees, and any recording or recap that surfaced. Skip clearly unrelated personal events.
-6. **Assemble** one markdown document: a short header (date, sources covered), a section per source, then a brief "Loose threads worth surfacing" list of anything decision-, risk-, or action-like. Stay faithful to the source; do not invent.
-7. **Post** by calling the attached `strata_post_document` with:
+1. **Set the window.** Use the current date in `timezone` to identify the previous calendar day. Set the window to `00:00` through `23:59:59` local time. Call the date `DATE` and format it as `YYYY-MM-DD`.
+2. **Gather Slack messages.** Read messages inside the window for each channel in `channels`. Expand every thread that has replies. If `dm_users` is set, include those direct messages for the same window.
+3. **Resolve author names.** Use `slack_read_user_profile` for each user ID. Make a reasonable attempt to identify unresolved senders from Slack Connect or other external messages. If a sender is still unknown, use `Unknown (external)`. Never fabricate a name.
+4. **Gather Gmail messages.** If `gmail_query` is set, restrict the search to the window. Include the sender, time, subject, and a short source-faithful summary of relevant messages in each matching thread. Skip organization-wide or automated messages that do not add relevant information.
+5. **Gather calendar events.** List events inside the window. Include the title, time, attendees, and any recording or recap in the event details. Skip clearly unrelated personal events.
+6. **Assemble the document.** Write a short header with the date and sources covered. Add one section for each source. End with a brief `Decisions, risks, and actions` list. Stay faithful to the sources. Do not invent details.
+7. **Post the document.** Call the attached `strata_post_document` with:
    - `title`: `{title_prefix}, {weekday} {DATE}`
    - `kind`: `document`
    - `source`: `routine`
    - `occurred_at`: `DATE`
-   - `external_id`: `slack-email-{DATE}` (idempotent: re-runs return the existing doc, never a duplicate)
-   - `content`: the assembled markdown
-8. **Empty day.** If nothing substantive was found, do not post. Report `no activity for {DATE}` and stop.
-9. **No disk.** Never write files. The routine transcript is the only local record.
+   - `external_id`: `slack-email-{DATE}` (re-runs use the same identifier and do not create a duplicate)
+   - `content`: the assembled Markdown
+8. **Handle an empty day.** If no Slack messages, Gmail messages, or calendar events remain after the filters above, do not post. Report `no activity for {DATE}` and stop.
+9. **Keep the run off disk.** Never write files. The routine transcript is the only local record.
 
-## Output
+## Report the result
 
-End with a one-line summary for the routine transcript: `DATE`, per-source counts, and the returned Strata `document_id` (or `skipped: empty`).
+End with one summary line for the routine transcript. Include `DATE`, the count for each source, and the `document_id` returned by Stratagraph. For an empty day, include `skipped: empty` instead of a document ID.
