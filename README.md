@@ -12,7 +12,7 @@ Answers focused questions from a connected Stratagraph project. It chooses the r
 
 ### `import`
 
-Cold-starts a new or empty Stratagraph graph from existing sources. The agent first explains the process and agrees the scope with you. It then inventories the approved sources, extracts small claims with exact source text, and prepares an import review report and `import-bundle.json` file. After you import and review that history, the agent helps write a current-state document that connects what still matters. `scripts/import.py` handles inventory, strict source validation, reviewed-entry replacement, bundle assembly, and deterministic combination of separately reviewed bundles. Invoke the skill with `/stratagraph:import`, or point it at a source collection and ask to cold-start a Stratagraph project. Do not use it for routine ingestion or posting one document.
+Cold-starts a new or empty Stratagraph graph from existing sources. The agent first explains the process and agrees the scope with you. It then inventories the approved sources, extracts small claims with exact source text, and prepares an import review report and `import-bundle.json` file. After you import and review that history, the agent helps write a current-state document that connects what still matters. `scripts/import.py` handles inventory, strict source validation, reviewed-entry replacement, import file assembly, and deterministic combination of separately reviewed import files. Invoke the skill with `/stratagraph:import`, or point it at a source collection and ask to cold-start a Stratagraph project. Do not use it for routine ingestion or posting one document.
 
 ### `gather`
 
@@ -24,7 +24,7 @@ The skills follow the open [Agent Skills](https://agentskills.io) standard. Each
 
 ### Skills CLI
 
-Install all skills for Codex, Claude Code, Cursor, Copilot, Gemini CLI, Goose, or another supported agent:
+Choose and install skills for Codex, Claude Code, Cursor, Copilot, Gemini CLI, Goose, or another supported agent:
 
 ```bash
 npx skills add Stratagraph/stratagraph-skills
@@ -52,7 +52,7 @@ Then `/stratagraph:find-in-stratagraph`, `/stratagraph:import`, and `/stratagrap
 
 ### MCP connection (all agents)
 
-Every skill uses Strata over MCP, so connect your project's MCP server wherever you run your agent:
+Every skill uses Stratagraph over MCP, so connect your project's MCP server wherever you run your agent:
 
 - **Desktop / claude.ai:** Settings → Connectors → Add custom connector, name `strata`, URL `https://stratagraph.io/api/mcp/YOURPROJECT`
 - **CLI:** `claude mcp add --transport http strata https://stratagraph.io/api/mcp/YOURPROJECT` (or the equivalent for your agent)
@@ -61,14 +61,14 @@ If the server flags as needing authentication, complete the OAuth sign-in once (
 
 ## Multiple projects
 
-Strata projects are strictly isolated: one connector per project (`/api/mcp/PROJECTA`, `/api/mcp/PROJECTB`), named distinctly (e.g. `strata-projecta`). Then:
+Stratagraph projects are strictly isolated: one connector per project (`/api/mcp/PROJECTA`, `/api/mcp/PROJECTB`), named distinctly (e.g. `strata-projecta`). Then:
 
-- **Routines:** one routine per project. Each attaches only that project's Strata connector and carries that project's config (its channels differ anyway). No ambiguity.
-- **Interactive:** if several Strata connectors are attached to one session, add `strata_project: <connector name>` to the prompt or configuration so the skill knows which project to use. With exactly one attached, omit it.
+- **Routines:** one routine per project. Each attaches only that project's Stratagraph connector and carries that project's config (its channels differ anyway). No ambiguity.
+- **Interactive:** if several Stratagraph connectors are attached to one session, add `strata_project: <connector name>` to the prompt or configuration so the skill knows which project to use. With exactly one attached, omit it.
 
 ## Setting up a routine
 
-1. **Connect your accounts** at [claude.ai/customize/connectors](https://claude.ai/customize/connectors): Slack, Gmail, Google Calendar, and your Strata project connector. Gmail and Calendar must be connected here (they do not support local OAuth).
+1. **Connect your accounts** at [claude.ai/customize/connectors](https://claude.ai/customize/connectors): Slack, Gmail, Google Calendar, and your Stratagraph project connector. Gmail and Calendar must be connected here (they do not support local OAuth).
 2. **Create a routine** (claude.ai/code/routines → New → Remote, or `/schedule` in the CLI, or Desktop app → Routines).
 3. Point it at this repository, set a **nightly schedule** at about `00:10` in your time zone (it gathers the full prior day), and attach the four connectors above (remove any others).
 4. In the routine **prompt**, run the gather and supply your config:
@@ -82,7 +82,7 @@ timezone: America/New_York
 title_prefix: Slack & email log
 ```
 
-5. **Test** with one manual run and check the transcript: the skill loaded, all connectors were reached, and exactly one Strata document was posted with the right date. Then leave it nightly.
+5. **Test** with one manual run and check the transcript: the skill loaded, all connectors were reached, and exactly one Stratagraph document was posted with the right date. Then leave it nightly.
 
 ### Config reference
 
@@ -93,7 +93,7 @@ title_prefix: Slack & email log
 | `gmail_query` | no | Gmail search string; omit to skip email |
 | `timezone` | yes | IANA time zone for the day window |
 | `title_prefix` | no | Document title label |
-| `strata_project` | no | Connector name to post to when several Strata connectors are attached |
+| `strata_project` | no | Connector name to post to when several Stratagraph connectors are attached |
 
 ## Notes
 

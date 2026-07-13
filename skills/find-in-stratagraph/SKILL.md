@@ -49,7 +49,7 @@ Ask a question only when 2 or more reasonable scopes would produce different ans
 | Named brief or explicit request for maintained synthesis | `strata_list_briefs`, then `strata_get_brief` | Use briefs only when they are available and clearly relevant. Continue without them when none exist. |
 | Unfamiliar node types or relationship meanings | `strata_get_graph_schema` | Read the live taxonomy instead of guessing. |
 
-For a question limited to a named source, retrieve the document's complete list of extracted claims before declaring a gap. For a question limited to a person, set `speaker` instead of only adding the person's name to the query.
+For a question limited to a named source, use `strata_get_document` to inspect every returned extracted claim before declaring a gap. The document response contains claim snippets, not full claim bodies. Fetch each node used in the answer with `strata_get_node` or `strata_get_nodes`. If the document response returns `truncated: true`, state that the claim list is incomplete and do not claim that the document lacks a matching claim. For a question limited to a person, set `speaker` instead of only adding the person's name to the query.
 
 ## Read the evidence
 
@@ -60,7 +60,7 @@ After a useful search:
 - Fetch 1 clearly relevant candidate with `strata_get_node`.
 - Fetch several relevant, disconnected candidates in 1 `strata_get_nodes` call.
 - Traverse from a finding at depth 1 when its support, replacement, conflict, or resolution affects the answer.
-- Fetch the document when the answer depends on all claims extracted from that document.
+- Fetch the document when the answer depends on all claims extracted from that document. Then fetch every relevant node in full before citing it.
 
 Read full results before running another search. Do not repeat a successful query with synonyms. Search again only to fill a specific gap, such as a named source, person, date, or term found in full node content.
 
@@ -91,4 +91,4 @@ Include only what helps the user judge the answer:
 - any relevant review note
 - any evidence gap
 
-Never display a bare node key in the user-facing answer. Never invent or reconstruct a node key. Do not describe the tool calls unless the user asks. After semantic search, say, “I didn't find this in the returned matches.” Claim only that a specific document lacks an extracted claim after retrieving that document's full claim list.
+Never display a bare node key in the user-facing answer. Never invent or reconstruct a node key. Do not describe the tool calls unless the user asks. After semantic search, say, “I didn't find this in the returned matches.” Claim only that a specific document lacks an extracted claim after retrieving the document and confirming that `truncated` is `false`.
