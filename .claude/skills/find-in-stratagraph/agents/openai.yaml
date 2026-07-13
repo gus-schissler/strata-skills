@@ -1,4 +1,0 @@
-interface:
-  display_name: "Find in Stratagraph"
-  short_description: "Find verified answers in Stratagraph projects"
-  default_prompt: "Use $find-in-stratagraph to answer a focused question from the connected Stratagraph project."

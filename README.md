@@ -2,7 +2,7 @@
 
 Project-agnostic agent skills for using a [Stratagraph](https://stratagraph.io) knowledge graph. The skills find verified answers, cold-start a project from an existing corpus, and keep it fed as an unattended cloud routine.
 
-Nothing here is tied to a specific project, team, or connector, so any team can point their own agent or routine at this repo with their own connections.
+Nothing here is tied to a specific project, team, or connector, so any team can point its agent or routine at this repository with its own connections.
 
 ## Skills
 
@@ -12,29 +12,43 @@ Answers focused questions from a connected Stratagraph project. It chooses the r
 
 ### `import`
 
-Cold-starts a new or empty Stratagraph graph from existing sources. The agent first explains the process and agrees the scope with you. It then inventories the approved sources, extracts small claims with exact source text, and prepares an import review report and `import-bundle.json` file. After you import and review that history, the agent helps write a current-state document that connects what still matters. `import.py` handles inventory, strict source validation, reviewed-entry replacement, bundle assembly, and deterministic combination of separately reviewed bundles. Invoke the skill with `/stratagraph:import`, or point it at a source collection and ask to cold-start a Stratagraph project. Do not use it for routine ingestion or posting one document.
+Cold-starts a new or empty Stratagraph graph from existing sources. The agent first explains the process and agrees the scope with you. It then inventories the approved sources, extracts small claims with exact source text, and prepares an import review report and `import-bundle.json` file. After you import and review that history, the agent helps write a current-state document that connects what still matters. `scripts/import.py` handles inventory, strict source validation, reviewed-entry replacement, bundle assembly, and deterministic combination of separately reviewed bundles. Invoke the skill with `/stratagraph:import`, or point it at a source collection and ask to cold-start a Stratagraph project. Do not use it for routine ingestion or posting one document.
 
 ### `gather`
 
-Gathers the previous calendar day of Slack messages, Gmail, and calendar events for a configured set of sources, assembles one dated markdown document, and posts it to the connected Stratagraph project via `strata_post_document`. Idempotent per day (`external_id = slack-email-<date>`), so re-runs never duplicate. Writes nothing to disk. Built to run as an unattended **cloud routine** (a routine clones this repo and loads the skill from `.claude/skills/`).
+Gathers the previous calendar day of Slack messages, Gmail, and calendar events for a configured set of sources, assembles one dated markdown document, and posts it to the connected Stratagraph project via `strata_post_document`. Idempotent per day (`external_id = slack-email-<date>`), so re-runs never duplicate. Writes nothing to disk. Built to run as an unattended cloud routine. The repository exposes the canonical skill to Claude through `.claude/skills/gather` without keeping another copy.
 
 ## Install
 
-The skills follow the open [Agent Skills](https://agentskills.io) standard (a `SKILL.md` folder), so one copy works across every skills-compatible agent. This repo hosts them two ways.
+The skills follow the open [Agent Skills](https://agentskills.io) standard. Each skill has one canonical folder under `skills/`.
 
-### Claude Code (plugin marketplace)
+### Skills CLI
 
+Install all skills for Codex, Claude Code, Cursor, Copilot, Gemini CLI, Goose, or another supported agent:
+
+```bash
+npx skills add Stratagraph/stratagraph-skills
 ```
+
+Install one skill:
+
+```bash
+npx skills add Stratagraph/stratagraph-skills --skill find-in-stratagraph
+npx skills add Stratagraph/stratagraph-skills --skill import
+npx skills add Stratagraph/stratagraph-skills --skill gather
+```
+
+The skills CLI installs the selected canonical folders into the paths used by your agent. It uses project scope by default. Choose its global option when you want the skills available across projects.
+
+### Claude Code plugin marketplace
+
+```text
 /plugin marketplace add Stratagraph/stratagraph-skills
 /plugin install stratagraph@stratagraph-skills
 /reload-plugins
 ```
 
-Then `/stratagraph:find-in-stratagraph` (focused lookup), `/stratagraph:import` (cold-start), and `/stratagraph:gather` (daily ingestion) are available, and Claude invokes them automatically when a request matches. No `version` is pinned, so every commit ships as an update.
-
-### Codex, Cursor, Copilot, Gemini CLI, Goose, and other agents
-
-These agents auto-discover skills from an `.agents/skills/` directory. Point yours at this repository's copies: clone it and symlink or copy the skills you want into your `~/.agents/skills/` (or a repository-local `.agents/skills/`), or use your agent's skill installer if it supports GitHub sources (e.g. Codex's `$skill-installer`). Each skill activates automatically when a matching request is made.
+Then `/stratagraph:find-in-stratagraph`, `/stratagraph:import`, and `/stratagraph:gather` are available. Claude can also invoke them automatically when a request matches. The marketplace manifest points at the same canonical `skills/` folders used by the skills CLI.
 
 ### MCP connection (all agents)
 
@@ -56,10 +70,10 @@ Strata projects are strictly isolated: one connector per project (`/api/mcp/PROJ
 
 1. **Connect your accounts** at [claude.ai/customize/connectors](https://claude.ai/customize/connectors): Slack, Gmail, Google Calendar, and your Strata project connector. Gmail and Calendar must be connected here (they do not support local OAuth).
 2. **Create a routine** (claude.ai/code/routines → New → Remote, or `/schedule` in the CLI, or Desktop app → Routines).
-3. Point it at this repo, set a **nightly schedule** at ~00:10 in your timezone (it gathers the full prior day), and attach the four connectors above (remove any others).
+3. Point it at this repository, set a **nightly schedule** at about `00:10` in your time zone (it gathers the full prior day), and attach the four connectors above (remove any others).
 4. In the routine **prompt**, run the gather and supply your config:
 
-```
+```text
 Run the gather skill for yesterday.
 channels: #your-channel, #another-channel
 dm_users: Person A, Person B
@@ -77,12 +91,13 @@ title_prefix: Slack & email log
 | `channels` | yes | Slack channels to read (names or IDs) |
 | `dm_users` | no | People whose DMs to include |
 | `gmail_query` | no | Gmail search string; omit to skip email |
-| `timezone` | yes | IANA tz for the day window |
+| `timezone` | yes | IANA time zone for the day window |
 | `title_prefix` | no | Document title label |
 | `strata_project` | no | Connector name to post to when several Strata connectors are attached |
 
 ## Notes
 
-- Routines are per claude.ai account and use that account's connectors. "Many users" means each person creates their own routine; they can share this repo.
+- Routines are per claude.ai account and use that account's connectors. "Many users" means each person creates their own routine; they can share this repository.
 - If a connector's auth goes stale, a nightly run fails quietly in the routine transcript rather than nudging you. Glance at it periodically.
-- Adding more skills: drop them under `.claude/skills/<name>/SKILL.md` and reference them from a routine prompt.
+- Add a new canonical skill under `skills/<name>/SKILL.md`. Add it to `.claude-plugin/marketplace.json` when the Claude plugin should include it.
+- Add a `.claude/skills/<name>` symlink only when a cloned repository must expose that skill directly to a cloud routine.

@@ -1,6 +1,0 @@
-{
-  "name": "stratagraph",
-  "displayName": "Stratagraph",
-  "description": "Skills for finding and feeding knowledge in a Stratagraph project over MCP. Requires your Strata project's MCP server connected, e.g. https://stratagraph.io/api/mcp/YOURPROJECT",
-  "author": { "name": "Gus Schissler" }
-}
