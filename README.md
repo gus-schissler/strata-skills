@@ -1,10 +1,14 @@
 # stratagraph-skills
 
-Project-agnostic Claude Code skills for feeding a [Strata](https://stratagraph.io) knowledge graph. One **cold-starts** a project from an existing corpus. The other **keeps it fed** as an unattended cloud routine.
+Project-agnostic agent skills for using a [Stratagraph](https://stratagraph.io) knowledge graph. The skills find verified answers, cold-start a project from an existing corpus, and keep it fed as an unattended cloud routine.
 
 Nothing here is tied to a specific project, team, or connector, so any team can point their own agent or routine at this repo with their own connections.
 
 ## Skills
+
+### `find-in-stratagraph`
+
+Answers focused questions from a connected Stratagraph project. It chooses the right read tool for a node key, topic, document, speaker, or relationship. Search results identify candidates. The skill reads full nodes and checks relationships before claiming that something is current, replaced, disputed, or resolved. Briefs are optional. The skill never writes to the project, and each material claim cites an exact node key linked to its Stratagraph page. Invoke it with `/stratagraph:find-in-stratagraph`, or ask a focused factual, requirement, status, ownership, or source question whose answer should come from Stratagraph. Use a separate trace workflow for broad topic histories.
 
 ### `import`
 
@@ -26,15 +30,15 @@ The skills follow the open [Agent Skills](https://agentskills.io) standard (a `S
 /reload-plugins
 ```
 
-Then `/stratagraph:import` (cold-start) or `/stratagraph:gather` are available, and Claude invokes them automatically when a request matches. No `version` is pinned, so every commit ships as an update.
+Then `/stratagraph:find-in-stratagraph` (focused lookup), `/stratagraph:import` (cold-start), and `/stratagraph:gather` (daily ingestion) are available, and Claude invokes them automatically when a request matches. No `version` is pinned, so every commit ships as an update.
 
 ### Codex, Cursor, Copilot, Gemini CLI, Goose, and other agents
 
-These agents auto-discover skills from an `.agents/skills/` directory. Point yours at this repo's copy: clone it and symlink or copy `import` into your `~/.agents/skills/` (or a repo-local `.agents/skills/`), or use your agent's skill installer if it supports GitHub sources (e.g. Codex's `$skill-installer`). The skill then activates automatically when you ask to cold-start a Stratagraph project.
+These agents auto-discover skills from an `.agents/skills/` directory. Point yours at this repository's copies: clone it and symlink or copy the skills you want into your `~/.agents/skills/` (or a repository-local `.agents/skills/`), or use your agent's skill installer if it supports GitHub sources (e.g. Codex's `$skill-installer`). Each skill activates automatically when a matching request is made.
 
 ### MCP connection (all agents)
 
-Every skill posts to Strata over MCP, so connect your project's MCP server wherever you run your agent:
+Every skill uses Strata over MCP, so connect your project's MCP server wherever you run your agent:
 
 - **Desktop / claude.ai:** Settings → Connectors → Add custom connector, name `strata`, URL `https://stratagraph.io/api/mcp/YOURPROJECT`
 - **CLI:** `claude mcp add --transport http strata https://stratagraph.io/api/mcp/YOURPROJECT` (or the equivalent for your agent)
@@ -46,7 +50,7 @@ If the server flags as needing authentication, complete the OAuth sign-in once (
 Strata projects are strictly isolated: one connector per project (`/api/mcp/PROJECTA`, `/api/mcp/PROJECTB`), named distinctly (e.g. `strata-projecta`). Then:
 
 - **Routines:** one routine per project. Each attaches only that project's Strata connector and carries that project's config (its channels differ anyway). No ambiguity.
-- **Interactive:** if several Strata connectors are attached to one session, add `strata_project: <connector name>` to the config so the skill knows where to post. With exactly one attached, omit it.
+- **Interactive:** if several Strata connectors are attached to one session, add `strata_project: <connector name>` to the prompt or configuration so the skill knows which project to use. With exactly one attached, omit it.
 
 ## Setting up a routine
 
