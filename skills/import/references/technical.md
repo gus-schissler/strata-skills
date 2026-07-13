@@ -1,10 +1,10 @@
 # Technical workflow
 
-Read this file before running `import.py`, assembling bundles, or assigning workers.
+Read this file before running `scripts/import.py`, assembling bundles, or assigning workers.
 
 ## Resolve the helper path
 
-Set `<skill-dir>` to the directory that contains `SKILL.md` and `import.py`. The corpus is usually the working directory, so do not assume `import.py` is there.
+Set `<skill-dir>` to the directory that contains `SKILL.md`. The helper is at `<skill-dir>/scripts/import.py`. The corpus is usually the working directory, so do not assume the helper is there.
 
 Use one absolute `<out>` path for every command that accepts `--output-dir`.
 
@@ -15,7 +15,7 @@ Use a separate subdirectory for each source-group review bundle, such as `<out>/
 ### Inventory
 
 ```bash
-python3 <skill-dir>/import.py inventory <approved-root> --output-dir <out>
+python3 <skill-dir>/scripts/import.py inventory <approved-root> --output-dir <out>
 ```
 
 Optional flags:
@@ -45,7 +45,7 @@ Apply the choices as follows:
 ### Validate one entry
 
 ```bash
-python3 <skill-dir>/import.py validate <atoms.json> \
+python3 <skill-dir>/scripts/import.py validate <atoms.json> \
   --text <document> \
   --types <comma-separated-live-types>
 ```
@@ -55,13 +55,13 @@ python3 <skill-dir>/import.py validate <atoms.json> \
 ### Add or replace reviewed entries
 
 ```bash
-python3 <skill-dir>/import.py bundle --output-dir <out> <entry.json> ...
+python3 <skill-dir>/scripts/import.py bundle --output-dir <out> <entry.json> ...
 ```
 
 The command skips an `externalId` that is already present. Use explicit replacement after a reviewed entry changes:
 
 ```bash
-python3 <skill-dir>/import.py bundle --replace --output-dir <out> <entry.json> ...
+python3 <skill-dir>/scripts/import.py bundle --replace --output-dir <out> <entry.json> ...
 ```
 
 Validate every changed entry again before replacement.
@@ -71,7 +71,7 @@ Validate every changed entry again before replacement.
 Use a new output directory. Do not overwrite a parent review bundle.
 
 ```bash
-python3 <skill-dir>/import.py combine \
+python3 <skill-dir>/scripts/import.py combine \
   --output-dir <out>/combined \
   --types <comma-separated-live-types> \
   <reviewed-bundle-1.json> <reviewed-bundle-2.json> ...

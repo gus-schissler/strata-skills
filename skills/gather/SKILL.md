@@ -8,10 +8,9 @@ description: >-
   connector is attached and reads its source configuration from the routine
   prompt. Trigger when a routine asks to gather yesterday's Slack, email, and
   calendar activity into Stratagraph, or to run the daily Stratagraph gather.
-  Do not use for ad hoc searches or manual imports.
-compatibility: >-
-  Requires a connected Stratagraph project MCP server (`strata_post_document`)
-  and Slack, Gmail, and Calendar connectors.
+  Requires a connected Stratagraph project MCP server with
+  `strata_post_document`, plus Slack, Gmail, and Calendar connectors. Do not use
+  for ad hoc searches or manual imports.
 ---
 
 # Gather daily activity

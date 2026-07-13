@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / ".agents" / "skills" / "import" / "import.py"
+SCRIPT = ROOT / "skills" / "import" / "scripts" / "import.py"
 SPEC = importlib.util.spec_from_file_location("stratagraph_import", SCRIPT)
 IMPORT = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(IMPORT)

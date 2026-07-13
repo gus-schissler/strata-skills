@@ -140,7 +140,7 @@ Record the model and contract version in the report. Record `unknown` when the l
 
 ## Part 1: prepare and review the import
 
-Read [references/technical.md](references/technical.md) before running `import.py`, assigning workers, or assembling bundles.
+Read [references/technical.md](references/technical.md) before running `scripts/import.py`, assigning workers, or assembling bundles.
 
 ### 1. Inventory the approved sources
 
@@ -183,7 +183,7 @@ Write `sweep-report.md` with source coverage, skipped files, claim and span coun
 
 Include a direct assessment of source support, one-claim quality, relevance, chronology, and coverage. Recommend a manageable human spot-check.
 
-Keep separate review bundles for source groups with different origins or evidence rules. Use `import.py combine` to create one upload bundle in a new directory after the user approves every parent bundle. Keep the parent bundles and generated hash manifest.
+Keep separate review bundles for source groups with different origins or evidence rules. Use `scripts/import.py combine` to create one upload bundle in a new directory after the user approves every parent bundle. Keep the parent bundles and generated hash manifest.
 
 ### 5. Review, import, and wait for search
 
