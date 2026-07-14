@@ -12,6 +12,11 @@ Use a separate subdirectory for each source-group review bundle, such as `<out>/
 
 ## Commands
 
+Review and upload bundles use import contract version 2. Version 2 requires a
+`nodes` array on every document entry. Version 1 `atoms` bundles are not
+compatible; regenerate them with the current helper before resuming or
+combining an import.
+
 ### Inventory
 
 ```bash
@@ -45,7 +50,7 @@ Apply the choices as follows:
 ### Validate one entry
 
 ```bash
-python3 <skill-dir>/scripts/import.py validate <atoms.json> \
+python3 <skill-dir>/scripts/import.py validate <nodes.json> \
   --text <document> \
   --types <comma-separated-live-types>
 ```
@@ -86,6 +91,8 @@ The command:
 - writes `import-bundle.json`
 - writes `combined-manifest.json` with parent and output SHA-256 hashes
 
+Both the combined bundle and its hash manifest declare `"version": 2`.
+
 Keep every parent review bundle.
 
 ## Entry shape
@@ -100,7 +107,7 @@ Keep every parent review bundle.
     "text": "...",
     "participants": []
   },
-  "atoms": [
+  "nodes": [
     {
       "type": "...",
       "content": "...",

@@ -38,7 +38,7 @@ Explain which decisions are needed now and which can wait:
 - Decide sources, exclusions, detail, date handling, and use of parallel workers before extraction.
 - Decide the structure and content of the current-state document after import.
 
-Use familiar words in conversation. Say *import file* instead of *bundle* and *import review report* instead of `sweep-report.md`. If you use *atom*, explain that it means one small claim. If you use *baseline*, explain that it means a reviewed current-state document.
+Use familiar words in conversation. Say *import file* instead of *bundle* and *import review report* instead of `sweep-report.md`. If you use *node*, explain that it means one small claim. If you use *baseline*, explain that it means a reviewed current-state document.
 
 Adapt your first question to the request:
 
@@ -119,7 +119,7 @@ Before classifying inventory entries or extracting claims, read [references/evid
 Always:
 
 - inspect the live tool schema and taxonomy instead of using a remembered type list
-- put one claim in each atom
+- put one claim in each node
 - copy 1 to 5 exact supporting spans from the same source
 - include a speaker only when the source identifies them
 - keep claims from different documents separate

@@ -49,7 +49,7 @@ The user may confirm that a document was written by a person. Record that confir
 
 ## Keep each claim verifiable
 
-- Put one claim in each atom.
+- Put one claim in each node.
 - Copy 1 to 5 supporting spans exactly from the source.
 - Include a speaker only when the source identifies them.
 - Keep claims from different documents separate.
