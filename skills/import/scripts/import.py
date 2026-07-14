@@ -307,6 +307,12 @@ def cmd_validate(args):
         _fail("could not read document text %s: %s" % (args.text, exc))
         return 2
 
+    if isinstance(data, dict) and "atoms" in data and "nodes" not in data:
+        _fail(
+            "nodes JSON uses the legacy {atoms: [...]} shape; "
+            "rename or regenerate it as {nodes: [...]}"
+        )
+        return 2
     nodes = data.get("nodes", data) if isinstance(data, dict) else data
     if not isinstance(nodes, list):
         _fail("nodes JSON is not a list (or {nodes: [...]})")
@@ -503,10 +509,8 @@ def cmd_combine(args):
                 ) % (IMPORT_CONTRACT_VERSION, contract_error),
             })
             continue
-        documents = bundle.get("documents") if isinstance(bundle, dict) else None
-
         parent_nodes = 0
-        for index, entry in enumerate(documents):
+        for index, entry in enumerate(bundle["documents"]):
             label = "%s document %d" % (path, index)
             if not isinstance(entry, dict) or not isinstance(entry.get("document"), dict):
                 errors.append({"bundle": path, "index": index, "error": "invalid document entry"})
@@ -547,7 +551,7 @@ def cmd_combine(args):
         parents.append({
             "path": path,
             "sha256": parent_hash,
-            "documents": len(documents),
+            "documents": len(bundle["documents"]),
             "nodes": parent_nodes,
         })
 

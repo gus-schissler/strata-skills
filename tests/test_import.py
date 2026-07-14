@@ -58,6 +58,26 @@ class ImportHelperTests(unittest.TestCase):
         inexact = [{"type": "decision", "content": "A", "spans": ["missing"]}]
         self.assertFalse(IMPORT.validate_nodes(inexact, "source text", allowed)["ok"])
 
+    def test_validate_explains_legacy_atoms_shape(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            legacy = write_json(root / "legacy.json", {"atoms": entry("doc", "2025-01-01")["nodes"]})
+            text_path = root / "document.txt"
+            text_path.write_text("source text", encoding="utf-8")
+            args = types.SimpleNamespace(
+                nodes=legacy,
+                text=str(text_path),
+                types="decision",
+            )
+            stderr = io.StringIO()
+
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(stderr):
+                result = IMPORT.cmd_validate(args)
+
+            self.assertEqual(result, 2)
+            self.assertIn("legacy {atoms: [...]}", stderr.getvalue())
+            self.assertIn("{nodes: [...]}", stderr.getvalue())
+
     def test_bundle_replaces_only_with_explicit_flag(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
