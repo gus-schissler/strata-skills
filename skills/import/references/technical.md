@@ -12,10 +12,8 @@ Use a separate subdirectory for each source-group review bundle, such as `<out>/
 
 ## Commands
 
-Review and upload bundles use import contract version 2. Version 2 requires a
-`nodes` array on every document entry. Version 1 `atoms` bundles are not
-compatible; regenerate them with the current helper before resuming or
-combining an import.
+Review and upload bundles use import contract version 1. Every document entry
+requires a `nodes` array.
 
 ### Inventory
 
@@ -91,7 +89,7 @@ The command:
 - writes `import-bundle.json`
 - writes `combined-manifest.json` with parent and output SHA-256 hashes
 
-Both the combined bundle and its hash manifest declare `"version": 2`.
+Both the combined bundle and its hash manifest declare `"version": 1`.
 
 Keep every parent review bundle.
 

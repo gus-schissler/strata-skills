@@ -52,7 +52,7 @@ import sys
 # ---------------------------------------------------------------------------
 
 HEAD_BYTES = 8192  # how much of each file to sniff for signals / head peek
-IMPORT_CONTRACT_VERSION = 2
+IMPORT_CONTRACT_VERSION = 1
 
 # Directory names skipped by default at ANY depth: VCS, dependency trees, build
 # and tool caches. A source corpus is never these, and a raw project dir is
@@ -307,12 +307,6 @@ def cmd_validate(args):
         _fail("could not read document text %s: %s" % (args.text, exc))
         return 2
 
-    if isinstance(data, dict) and "atoms" in data and "nodes" not in data:
-        _fail(
-            "nodes JSON uses the legacy {atoms: [...]} shape; "
-            "rename or regenerate it as {nodes: [...]}"
-        )
-        return 2
     nodes = data.get("nodes", data) if isinstance(data, dict) else data
     if not isinstance(nodes, list):
         _fail("nodes JSON is not a list (or {nodes: [...]})")
@@ -354,9 +348,8 @@ def cmd_bundle(args):
         contract_error = _bundle_contract_error(bundle)
         if contract_error:
             _fail(
-                "existing import-bundle.json uses a stale or invalid import contract; "
-                "regenerate it with contract version %d and nodes[] before resuming: %s"
-                % (IMPORT_CONTRACT_VERSION, contract_error)
+                "existing import-bundle.json is invalid; refusing to overwrite: %s"
+                % contract_error
             )
             return 2
     else:
@@ -449,8 +442,6 @@ def _bundle_contract_error(bundle):
             return "document %d is not an object" % index
         if not isinstance(entry.get("nodes"), list):
             return "document %d has no nodes[] array" % index
-        if "atoms" in entry:
-            return "document %d contains the legacy atoms key" % index
     return None
 
 
@@ -503,10 +494,7 @@ def cmd_combine(args):
         if contract_error:
             errors.append({
                 "bundle": path,
-                "error": (
-                    "stale or invalid import contract; regenerate with version %d "
-                    "and nodes[]: %s"
-                ) % (IMPORT_CONTRACT_VERSION, contract_error),
+                "error": "invalid import contract: %s" % contract_error,
             })
             continue
         parent_nodes = 0

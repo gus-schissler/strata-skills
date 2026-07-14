@@ -58,26 +58,6 @@ class ImportHelperTests(unittest.TestCase):
         inexact = [{"type": "decision", "content": "A", "spans": ["missing"]}]
         self.assertFalse(IMPORT.validate_nodes(inexact, "source text", allowed)["ok"])
 
-    def test_validate_explains_legacy_atoms_shape(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            legacy = write_json(root / "legacy.json", {"atoms": entry("doc", "2025-01-01")["nodes"]})
-            text_path = root / "document.txt"
-            text_path.write_text("source text", encoding="utf-8")
-            args = types.SimpleNamespace(
-                nodes=legacy,
-                text=str(text_path),
-                types="decision",
-            )
-            stderr = io.StringIO()
-
-            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(stderr):
-                result = IMPORT.cmd_validate(args)
-
-            self.assertEqual(result, 2)
-            self.assertIn("legacy {atoms: [...]}", stderr.getvalue())
-            self.assertIn("{nodes: [...]}", stderr.getvalue())
-
     def test_bundle_replaces_only_with_explicit_flag(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -98,35 +78,35 @@ class ImportHelperTests(unittest.TestCase):
             bundle = json.loads((out / "import-bundle.json").read_text(encoding="utf-8"))
             self.assertEqual(bundle["documents"][0]["nodes"][0]["content"], "Second")
 
-    def test_bundle_rejects_legacy_atoms_key(self):
+    def test_bundle_rejects_entry_without_nodes(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             out = root / "out"
-            legacy = entry("doc", "2025-01-01")
-            legacy["atoms"] = legacy.pop("nodes")
-            legacy_path = write_json(root / "legacy.json", legacy)
-            args = types.SimpleNamespace(output_dir=str(out), entries=[legacy_path], replace=False)
+            invalid = entry("doc", "2025-01-01")
+            invalid["claims"] = invalid.pop("nodes")
+            invalid_path = write_json(root / "invalid.json", invalid)
+            args = types.SimpleNamespace(output_dir=str(out), entries=[invalid_path], replace=False)
 
             self.assertEqual(self.quiet(IMPORT.cmd_bundle, args), 1)
             bundle = json.loads((out / "import-bundle.json").read_text(encoding="utf-8"))
-            self.assertEqual(bundle["version"], 2)
+            self.assertEqual(bundle["version"], 1)
             self.assertEqual(bundle["documents"], [])
 
-    def test_bundle_rejects_stale_existing_contract_without_mutation(self):
+    def test_bundle_rejects_invalid_existing_contract_without_mutation(self):
         cases = (
             (
-                "same externalId with version 1",
-                {"version": 1, "documents": [entry("doc", "2025-01-01")]},
+                "unsupported version",
+                {"version": 2, "documents": [entry("doc", "2025-01-01")]},
                 "doc",
             ),
             (
-                "different externalId with legacy key",
+                "document without nodes",
                 {
-                    "version": 2,
+                    "version": 1,
                     "documents": [
                         {
                             "document": entry("old", "2025-01-01")["document"],
-                            "atoms": entry("old", "2025-01-01")["nodes"],
+                            "claims": entry("old", "2025-01-01")["nodes"],
                         }
                     ],
                 },
@@ -153,55 +133,55 @@ class ImportHelperTests(unittest.TestCase):
                     result = IMPORT.cmd_bundle(args)
 
                 self.assertEqual(result, 2)
-                self.assertIn("regenerate", stderr.getvalue())
+                self.assertIn("refusing to overwrite", stderr.getvalue())
                 self.assertEqual(bundle_path.read_bytes(), bundle_before)
                 self.assertEqual(worklist_path.read_bytes(), worklist_before)
 
-    def test_combine_rejects_legacy_atoms_key(self):
+    def test_combine_rejects_document_without_nodes(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            legacy_entry = entry("doc", "2025-01-01")
-            legacy_entry["atoms"] = legacy_entry.pop("nodes")
-            legacy = write_json(root / "legacy.json", {"version": 2, "documents": [legacy_entry]})
-            args = types.SimpleNamespace(output_dir=str(root / "combined"), types="decision", bundles=[legacy])
+            invalid_entry = entry("doc", "2025-01-01")
+            invalid_entry["claims"] = invalid_entry.pop("nodes")
+            invalid = write_json(root / "invalid.json", {"version": 1, "documents": [invalid_entry]})
+            args = types.SimpleNamespace(output_dir=str(root / "combined"), types="decision", bundles=[invalid])
 
             self.assertEqual(self.quiet(IMPORT.cmd_combine, args), 1)
 
     def test_combine_sorts_and_writes_hash_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            newer = write_json(root / "newer.json", {"version": 2, "documents": [entry("newer", "2025-02-01")]})
-            older = write_json(root / "older.json", {"version": 2, "documents": [entry("older", "2025-01-01")]})
+            newer = write_json(root / "newer.json", {"version": 1, "documents": [entry("newer", "2025-02-01")]})
+            older = write_json(root / "older.json", {"version": 1, "documents": [entry("older", "2025-01-01")]})
             out = root / "combined"
             args = types.SimpleNamespace(output_dir=str(out), types="decision", bundles=[newer, older])
 
             self.assertEqual(self.quiet(IMPORT.cmd_combine, args), 0)
             bundle = json.loads((out / "import-bundle.json").read_text(encoding="utf-8"))
-            self.assertEqual(bundle["version"], 2)
+            self.assertEqual(bundle["version"], 1)
             self.assertEqual([d["document"]["externalId"] for d in bundle["documents"]], ["older", "newer"])
 
             manifest = json.loads((out / "combined-manifest.json").read_text(encoding="utf-8"))
-            self.assertEqual(manifest["version"], 2)
+            self.assertEqual(manifest["version"], 1)
             self.assertEqual(len(manifest["parents"]), 2)
             self.assertEqual(len(manifest["combined"]["sha256"]), 64)
 
     def test_combine_rejects_duplicates_and_unresolved_dates(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            first = write_json(root / "first.json", {"version": 2, "documents": [entry("same", "2025-01-01")]})
-            duplicate = write_json(root / "duplicate.json", {"version": 2, "documents": [entry("same", "2025-02-01")]})
+            first = write_json(root / "first.json", {"version": 1, "documents": [entry("same", "2025-01-01")]})
+            duplicate = write_json(root / "duplicate.json", {"version": 1, "documents": [entry("same", "2025-02-01")]})
             args = types.SimpleNamespace(output_dir=str(root / "duplicates"), types="decision", bundles=[first, duplicate])
             self.assertEqual(self.quiet(IMPORT.cmd_combine, args), 1)
 
-            unresolved = write_json(root / "unresolved.json", {"version": 2, "documents": [entry("undated", "")]})
+            unresolved = write_json(root / "unresolved.json", {"version": 1, "documents": [entry("undated", "")]})
             args = types.SimpleNamespace(output_dir=str(root / "unresolved"), types="decision", bundles=[unresolved])
             self.assertEqual(self.quiet(IMPORT.cmd_combine, args), 1)
 
-    def test_combine_rejects_version_1_bundle(self):
+    def test_combine_rejects_unsupported_version(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            stale = write_json(root / "stale.json", {"version": 1, "documents": [entry("doc", "2025-01-01")]})
-            args = types.SimpleNamespace(output_dir=str(root / "combined"), types="decision", bundles=[stale])
+            unsupported = write_json(root / "unsupported.json", {"version": 2, "documents": [entry("doc", "2025-01-01")]})
+            args = types.SimpleNamespace(output_dir=str(root / "combined"), types="decision", bundles=[unsupported])
 
             self.assertEqual(self.quiet(IMPORT.cmd_combine, args), 1)
             self.assertFalse((root / "combined" / "import-bundle.json").exists())
