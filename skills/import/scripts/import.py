@@ -2,7 +2,7 @@
 """
 import.py -- deterministic helpers for the import skill.
 
-This file holds ONLY mechanics. The discipline (provenance, atom grain, the
+This file holds ONLY mechanics. The discipline (provenance, node grain, the
 Iron Rule, what to distill) lives in SKILL.md and is the agent's job; the agent
 does the reading and the LLM reasoning. These subcommands do the boring,
 error-prone, token-heavy parts that a script does reliably and an agent does
@@ -13,10 +13,10 @@ badly:
              buckets + a per-bucket cost rollup for the temporal-economy lever).
              Skips VCS/dependency/cache noise (.git, node_modules, ...) by
              default so a real project dir doesn't drown the manifest.
-  validate   check one document's distilled atoms JSON: types against the
-             fetched schema, 1-5 spans per atom, and every span a
+  validate   check one document's distilled nodes JSON: types against the
+             fetched schema, 1-5 spans per node, and every span a
              CHARACTER-EXACT substring of the document text.
-  bundle     assemble/append document+atom entries into import-bundle.json,
+  bundle     assemble/append document+node entries into import-bundle.json,
              idempotent by externalId, with optional explicit replacement and
              a resumable worklist journal.
   combine    validate and combine reviewed bundles in chronological order,
@@ -27,14 +27,14 @@ Design constraints:
     user's agent ships. No version-gated syntax (no match, walrus, `X | Y`).
   * Never crashes on whatever the user throws at it: unreadable/binary files,
     odd encodings, symlink loops, huge trees, malformed JSON, wrong-shape
-    atoms/entries. Problems are RECORDED in the output, never raised.
+    nodes/entries. Problems are RECORDED in the output, never raised.
   * No LLM calls, no network, no API key. Pure local computation.
 
 Usage:
   python3 scripts/import.py inventory <root> [--exclude DIR ...] [--output-dir DIR]
                                       [--head-lines N] [--bucket quarter|month|year]
                                       [--include-noise]
-  python3 scripts/import.py validate <atoms.json> --text <document> --types t1,t2,...
+  python3 scripts/import.py validate <nodes.json> --text <document> --types t1,t2,...
   python3 scripts/import.py bundle [--replace] --output-dir DIR <entry.json> ...
   python3 scripts/import.py combine --output-dir DIR --types t1,t2,... <bundle.json> ...
 """
@@ -52,6 +52,7 @@ import sys
 # ---------------------------------------------------------------------------
 
 HEAD_BYTES = 8192  # how much of each file to sniff for signals / head peek
+IMPORT_CONTRACT_VERSION = 1
 
 # Directory names skipped by default at ANY depth: VCS, dependency trees, build
 # and tool caches. A source corpus is never these, and a raw project dir is
@@ -252,27 +253,27 @@ def cmd_inventory(args):
 # validate
 # ---------------------------------------------------------------------------
 
-def validate_atoms(atoms, text, allowed):
-    """Return a deterministic validation report for one document's atoms."""
+def validate_nodes(nodes, text, allowed):
+    """Return a deterministic validation report for one document's nodes."""
     results = []
     ok = True
-    for i, atom in enumerate(atoms):
+    for i, node in enumerate(nodes):
         errors = []
         warnings = []
-        if not isinstance(atom, dict):
-            errors.append("atom is not an object")
+        if not isinstance(node, dict):
+            errors.append("node is not an object")
             results.append({"index": i, "type": None, "errors": errors, "warnings": warnings})
             ok = False
             continue
 
-        atom_type = atom.get("type")
-        if atom_type not in allowed:
-            errors.append("type %r not in fetched schema" % (atom_type,))
-        content = atom.get("content")
+        node_type = node.get("type")
+        if node_type not in allowed:
+            errors.append("type %r not in fetched schema" % (node_type,))
+        content = node.get("content")
         if not isinstance(content, str) or not content.strip():
             errors.append("empty or non-string content")
 
-        spans = atom.get("spans")
+        spans = node.get("spans")
         if not isinstance(spans, list):
             spans = []
         if not spans:
@@ -287,17 +288,17 @@ def validate_atoms(atoms, text, allowed):
 
         if errors:
             ok = False
-        results.append({"index": i, "type": atom_type, "errors": errors, "warnings": warnings})
+        results.append({"index": i, "type": node_type, "errors": errors, "warnings": warnings})
 
-    return {"atomCount": len(atoms), "ok": ok, "atoms": results}
+    return {"nodeCount": len(nodes), "ok": ok, "nodes": results}
 
 
 def cmd_validate(args):
     try:
-        with open(args.atoms, "r", encoding="utf-8") as fh:
+        with open(args.nodes, "r", encoding="utf-8") as fh:
             data = json.load(fh)
     except (OSError, IOError, ValueError) as exc:
-        _fail("could not read atoms JSON %s: %s" % (args.atoms, exc))
+        _fail("could not read nodes JSON %s: %s" % (args.nodes, exc))
         return 2
     try:
         with open(args.text, "r", encoding="utf-8", errors="replace") as fh:
@@ -306,16 +307,16 @@ def cmd_validate(args):
         _fail("could not read document text %s: %s" % (args.text, exc))
         return 2
 
-    atoms = data.get("atoms", data) if isinstance(data, dict) else data
-    if not isinstance(atoms, list):
-        _fail("atoms JSON is not a list (or {atoms: [...]})")
+    nodes = data.get("nodes", data) if isinstance(data, dict) else data
+    if not isinstance(nodes, list):
+        _fail("nodes JSON is not a list (or {nodes: [...]})")
         return 2
     allowed = set(t.strip() for t in args.types.split(",") if t.strip())
     if not allowed:
         _fail("--types must contain at least one fetched type")
         return 2
 
-    report = validate_atoms(atoms, text, allowed)
+    report = validate_nodes(nodes, text, allowed)
     report["document"] = args.text
     _print_json(report)
     return 0 if report["ok"] else 1
@@ -344,11 +345,15 @@ def cmd_bundle(args):
         except (OSError, IOError, ValueError) as exc:
             _fail("existing import-bundle.json is unreadable; refusing to overwrite: %s" % exc)
             return 2
-        if not isinstance(bundle, dict) or not isinstance(bundle.get("documents"), list):
-            _fail("existing import-bundle.json has no documents[] array; refusing to overwrite")
+        contract_error = _bundle_contract_error(bundle)
+        if contract_error:
+            _fail(
+                "existing import-bundle.json is invalid; refusing to overwrite: %s"
+                % contract_error
+            )
             return 2
     else:
-        bundle = {"version": 1, "documents": []}
+        bundle = {"version": IMPORT_CONTRACT_VERSION, "documents": []}
 
     journal = _load_json(journal_path, {"entries": {}})
     if not isinstance(journal, dict) or not isinstance(journal.get("entries"), dict):
@@ -372,15 +377,15 @@ def cmd_bundle(args):
             _warn("skipping entry with no externalId: %s" % entry_path)
             invalid += 1
             continue
-        if not isinstance(entry.get("atoms"), list):
-            _warn("skipping entry with missing/invalid atoms: %s" % entry_path)
+        if not isinstance(entry.get("nodes"), list):
+            _warn("skipping entry with missing/invalid nodes: %s" % entry_path)
             invalid += 1
             continue
-        payload = {"document": entry["document"], "atoms": entry["atoms"]}
+        payload = {"document": entry["document"], "nodes": entry["nodes"]}
         if ext_id in seen:
             if args.replace:
                 bundle["documents"][seen[ext_id]] = payload
-                journal["entries"][ext_id] = {"status": "replaced", "atoms": len(entry["atoms"])}
+                journal["entries"][ext_id] = {"status": "replaced", "nodes": len(entry["nodes"])}
                 replaced += 1
             else:
                 skipped += 1
@@ -388,19 +393,19 @@ def cmd_bundle(args):
             continue
         bundle["documents"].append(payload)
         seen[ext_id] = len(bundle["documents"]) - 1
-        journal["entries"][ext_id] = {"status": "bundled", "atoms": len(entry["atoms"])}
+        journal["entries"][ext_id] = {"status": "bundled", "nodes": len(entry["nodes"])}
         added += 1
 
     _write_json(bundle_path, bundle)
     _write_json(journal_path, journal)
-    total_atoms = sum(
-        len(d["atoms"]) for d in bundle["documents"]
-        if isinstance(d, dict) and isinstance(d.get("atoms"), list)
+    total_nodes = sum(
+        len(d["nodes"]) for d in bundle["documents"]
+        if isinstance(d, dict) and isinstance(d.get("nodes"), list)
     )
     _print_json({
         "bundle": bundle_path,
         "documents": len(bundle["documents"]),
-        "atoms": total_atoms,
+        "nodes": total_nodes,
         "addedThisRun": added,
         "replacedThisRun": replaced,
         "skippedAlreadyPresent": skipped,
@@ -419,6 +424,25 @@ def _sha256(path):
         for chunk in iter(lambda: fh.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _bundle_contract_error(bundle):
+    if not isinstance(bundle, dict):
+        return "bundle is not an object"
+    if bundle.get("version") != IMPORT_CONTRACT_VERSION:
+        return "expected version %d; found %r" % (
+            IMPORT_CONTRACT_VERSION,
+            bundle.get("version"),
+        )
+    documents = bundle.get("documents")
+    if not isinstance(documents, list):
+        return "bundle has no documents[] array"
+    for index, entry in enumerate(documents):
+        if not isinstance(entry, dict):
+            return "document %d is not an object" % index
+        if not isinstance(entry.get("nodes"), list):
+            return "document %d has no nodes[] array" % index
+    return None
 
 
 def _occurred_sort_key(value):
@@ -466,19 +490,21 @@ def cmd_combine(args):
         except (OSError, IOError, ValueError) as exc:
             errors.append({"bundle": path, "error": "could not read bundle: %s" % exc})
             continue
-        documents = bundle.get("documents") if isinstance(bundle, dict) else None
-        if not isinstance(documents, list):
-            errors.append({"bundle": path, "error": "bundle has no documents[] array"})
+        contract_error = _bundle_contract_error(bundle)
+        if contract_error:
+            errors.append({
+                "bundle": path,
+                "error": "invalid import contract: %s" % contract_error,
+            })
             continue
-
-        parent_atoms = 0
-        for index, entry in enumerate(documents):
+        parent_nodes = 0
+        for index, entry in enumerate(bundle["documents"]):
             label = "%s document %d" % (path, index)
             if not isinstance(entry, dict) or not isinstance(entry.get("document"), dict):
                 errors.append({"bundle": path, "index": index, "error": "invalid document entry"})
                 continue
             document = entry["document"]
-            atoms = entry.get("atoms")
+            nodes = entry.get("nodes")
             ext_id = document.get("externalId")
             if not isinstance(ext_id, str) or not ext_id:
                 errors.append({"bundle": path, "index": index, "error": "missing externalId"})
@@ -502,22 +528,19 @@ def cmd_combine(args):
             except ValueError as exc:
                 errors.append({"bundle": path, "index": index, "error": str(exc)})
                 continue
-            if not isinstance(atoms, list):
-                errors.append({"bundle": path, "index": index, "error": "atoms is not a list"})
-                continue
-            validation = validate_atoms(atoms, document["text"], allowed)
+            validation = validate_nodes(nodes, document["text"], allowed)
             if not validation["ok"]:
                 errors.append({"bundle": path, "index": index, "externalId": ext_id, "validation": validation})
                 continue
             seen[ext_id] = label
-            parent_atoms += len(atoms)
+            parent_nodes += len(nodes)
             combined.append((sort_key, ext_id, entry))
 
         parents.append({
             "path": path,
             "sha256": parent_hash,
-            "documents": len(documents),
-            "atoms": parent_atoms,
+            "documents": len(bundle["documents"]),
+            "nodes": parent_nodes,
         })
 
     if errors:
@@ -525,21 +548,21 @@ def cmd_combine(args):
         return 1
 
     combined.sort(key=lambda item: (item[0], item[1]))
-    output = {"version": 1, "documents": [item[2] for item in combined]}
+    output = {"version": IMPORT_CONTRACT_VERSION, "documents": [item[2] for item in combined]}
     try:
         os.makedirs(out_dir, exist_ok=True)
         _write_json(output_bundle, output)
         manifest_path = os.path.join(out_dir, "combined-manifest.json")
-        total_atoms = sum(len(entry.get("atoms", [])) for entry in output["documents"])
+        total_nodes = sum(len(entry.get("nodes", [])) for entry in output["documents"])
         manifest = {
-            "version": 1,
+            "version": IMPORT_CONTRACT_VERSION,
             "generatedBy": "import.py combine",
             "parents": parents,
             "combined": {
                 "path": output_bundle,
                 "sha256": _sha256(output_bundle),
                 "documents": len(output["documents"]),
-                "atoms": total_atoms,
+                "nodes": total_nodes,
             },
         }
         _write_json(manifest_path, manifest)
@@ -547,7 +570,7 @@ def cmd_combine(args):
         _fail("could not write combined bundle: %s" % exc)
         return 2
 
-    _print_json({"ok": True, "bundle": output_bundle, "manifest": manifest_path, "documents": len(output["documents"]), "atoms": total_atoms})
+    _print_json({"ok": True, "bundle": output_bundle, "manifest": manifest_path, "documents": len(output["documents"]), "nodes": total_nodes})
     return 0
 
 
@@ -617,8 +640,8 @@ def build_parser():
     inv.add_argument("--include-noise", action="store_true", help="do NOT skip .git/node_modules/caches (off by default)")
     inv.set_defaults(func=cmd_inventory)
 
-    val = sub.add_parser("validate", help="check one document's atoms JSON (types + verbatim spans)")
-    val.add_argument("atoms", help="atoms JSON file: [ ... ] or { atoms: [ ... ] }")
+    val = sub.add_parser("validate", help="check one document's nodes JSON (types + verbatim spans)")
+    val.add_argument("nodes", help="nodes JSON file: [ ... ] or { nodes: [ ... ] }")
     val.add_argument("--text", required=True, help="the document text the spans must match verbatim")
     val.add_argument("--types", required=True, help="comma-separated allowed node types (from the fetched schema)")
     val.set_defaults(func=cmd_validate)
@@ -626,7 +649,7 @@ def build_parser():
     bun = sub.add_parser("bundle", help="assemble/append entries into import-bundle.json")
     bun.add_argument("--output-dir", required=True, help="folder holding import-bundle.json + worklist.json")
     bun.add_argument("--replace", action="store_true", help="replace an existing entry with the same externalId")
-    bun.add_argument("entries", nargs="+", help="entry JSON files: { document: {...}, atoms: [...] }")
+    bun.add_argument("entries", nargs="+", help="entry JSON files: { document: {...}, nodes: [...] }")
     bun.set_defaults(func=cmd_bundle)
 
     com = sub.add_parser("combine", help="validate and combine reviewed bundles")
