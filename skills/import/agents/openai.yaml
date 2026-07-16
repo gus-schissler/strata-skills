@@ -1,0 +1,7 @@
+interface:
+  display_name: "Import into Stratagraph"
+  short_description: "Cold-start a Stratagraph project"
+  icon_small: "./assets/stratagraph.png"
+  icon_large: "./assets/stratagraph.png"
+  brand_color: "#D08C3F"
+  default_prompt: "Use $import to cold-start a new Stratagraph project from this source collection."
