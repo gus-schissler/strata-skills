@@ -1,0 +1,4 @@
+interface:
+  display_name: "Post to Stratagraph"
+  short_description: "Format and post content to Stratagraph"
+  default_prompt: "Use $post to format this content and post it to the connected Stratagraph project."
