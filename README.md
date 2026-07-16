@@ -1,6 +1,6 @@
 # stratagraph-skills
 
-Project-agnostic agent skills for using a [Stratagraph](https://stratagraph.io) knowledge graph. The skills find verified answers, cold-start a project from an existing corpus, and keep it fed as an unattended cloud routine.
+Project-agnostic agent skills for using a [Stratagraph](https://stratagraph.io) knowledge graph. The skills find verified answers, post new source material, cold-start a project from an existing corpus, and keep it fed as an unattended cloud routine.
 
 Nothing here is tied to a specific project, team, or connector, so any team can point its agent or routine at this repository with its own connections.
 
@@ -9,6 +9,10 @@ Nothing here is tied to a specific project, team, or connector, so any team can 
 ### `find-in-stratagraph`
 
 Answers focused questions from a connected Stratagraph project. It chooses the right read tool for a node key, topic, document, speaker, or relationship. Search results identify candidates. The skill reads full nodes and checks relationships before claiming that something is current, replaced, disputed, or resolved. Briefs are optional. The skill never writes to the project, and each material claim cites an exact node key linked to its Stratagraph page. Invoke it with `/stratagraph:find-in-stratagraph`, or ask a focused factual, requirement, status, ownership, or source question whose answer should come from Stratagraph. Use a separate trace workflow for broad topic histories.
+
+### `post`
+
+Turns material the agent can read into an extraction-ready Markdown document and posts it with `strata_post_document`. It accepts pasted text, files, webpages, emails, message threads, transcripts, notes, structured data, and agent-written drafts. The skill preserves full source content, speaker labels, timestamps, and provenance. It posts Markdown and simple lossless conversions directly. When the agent must process, consolidate, interpret, or materially adjust the source, it shows the converted document for approval before posting. Invoke it with `/stratagraph:post`, or ask to post, save, add, send, put, capture, or upload something to Stratagraph.
 
 ### `import`
 
@@ -34,6 +38,7 @@ Install one skill:
 
 ```bash
 npx skills add Stratagraph/stratagraph-skills --skill find-in-stratagraph
+npx skills add Stratagraph/stratagraph-skills --skill post
 npx skills add Stratagraph/stratagraph-skills --skill import
 npx skills add Stratagraph/stratagraph-skills --skill gather
 ```
@@ -48,7 +53,7 @@ The skills CLI installs the selected canonical folders into the paths used by yo
 /reload-plugins
 ```
 
-Then `/stratagraph:find-in-stratagraph`, `/stratagraph:import`, and `/stratagraph:gather` are available. Claude can also invoke them automatically when a request matches. The marketplace manifest points at the same canonical `skills/` folders used by the skills CLI.
+Then `/stratagraph:find-in-stratagraph`, `/stratagraph:post`, `/stratagraph:import`, and `/stratagraph:gather` are available. Claude can also invoke them automatically when a request matches. The marketplace manifest points at the same canonical `skills/` folders used by the skills CLI.
 
 ### MCP connection (all agents)
 

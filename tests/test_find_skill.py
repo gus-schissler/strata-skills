@@ -21,6 +21,7 @@ class FindSkillPackagingTests(unittest.TestCase):
             plugin["skills"],
             [
                 "./skills/find-in-stratagraph",
+                "./skills/post",
                 "./skills/import",
                 "./skills/gather",
             ],
