@@ -7,6 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SKILLS_DIR = ROOT / "skills"
 MARKETPLACE_PATH = ROOT / ".claude-plugin" / "marketplace.json"
+CODEX_MANIFEST_PATH = ROOT / ".codex-plugin" / "plugin.json"
 
 
 def canonical_skills():
@@ -33,12 +34,15 @@ class PackagingTests(unittest.TestCase):
             with self.subTest(skill=relative_path):
                 self.assertTrue((ROOT / relative_path / "SKILL.md").is_file())
 
-    def test_marketplace_brand_assets_exist(self):
+    def test_agent_surface_brand_assets_exist(self):
         marketplace = json.loads(MARKETPLACE_PATH.read_text(encoding="utf-8"))
         plugin = marketplace["plugins"][0]
-        interface = plugin["interface"]
-
         self.assertEqual(plugin["displayName"], "Stratagraph")
+        self.assertNotIn("interface", plugin)
+
+        manifest = json.loads(CODEX_MANIFEST_PATH.read_text(encoding="utf-8"))
+        self.assertEqual(manifest["name"], "stratagraph")
+        interface = manifest["interface"]
         self.assertRegex(interface["brandColor"], r"\A#[0-9A-Fa-f]{6}\Z")
         for field in ("composerIcon", "logo"):
             with self.subTest(field=field):
