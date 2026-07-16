@@ -5,6 +5,7 @@
   "plugins": [
     {
       "name": "stratagraph",
+      "displayName": "Stratagraph",
       "source": "./",
       "strict": false,
       "skills": [

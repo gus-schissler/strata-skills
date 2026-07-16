@@ -1,4 +1,7 @@
 interface:
   display_name: "Find in Stratagraph"
   short_description: "Find verified answers in Stratagraph projects"
+  icon_small: "./assets/stratagraph.png"
+  icon_large: "./assets/stratagraph.png"
+  brand_color: "#D08C3F"
   default_prompt: "Use $find-in-stratagraph to answer a focused question from the connected Stratagraph project."

@@ -1,0 +1,39 @@
+{
+  "name": "stratagraph",
+  "version": "0.1.0",
+  "description": "Skills for using a Stratagraph knowledge project over MCP.",
+  "author": {
+    "name": "Stratagraph",
+    "url": "https://stratagraph.io"
+  },
+  "homepage": "https://stratagraph.io",
+  "repository": "https://github.com/Stratagraph/stratagraph-skills",
+  "keywords": [
+    "stratagraph",
+    "knowledge-graph",
+    "mcp",
+    "agent-skills"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Stratagraph",
+    "shortDescription": "Find, post, import, and gather knowledge",
+    "longDescription": "Use focused skills to find verified answers, post source material, import existing knowledge, and gather daily activity in Stratagraph.",
+    "developerName": "Stratagraph",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://stratagraph.io",
+    "defaultPrompt": [
+      "Find a verified answer in my Stratagraph project.",
+      "Post this source material to Stratagraph.",
+      "Import this source collection into a new Stratagraph project."
+    ],
+    "brandColor": "#D08C3F",
+    "composerIcon": "./assets/logo.png",
+    "logo": "./assets/logo.png",
+    "screenshots": []
+  }
+}
