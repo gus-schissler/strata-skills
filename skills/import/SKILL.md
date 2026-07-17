@@ -61,10 +61,9 @@ Use authoritative project metadata or an exhaustive node count or list to confir
 
 For extraction, require:
 
-- the description and input schema for `strata_import_document`
 - `strata_get_graph_schema`
 
-Inspect the `strata_import_document` tool description. Do not invoke the tool to read its contract.
+There is no import MCP tool. The import upload happens in the browser: after review, the user drops the bundle file on the Stratagraph Import page. Do not look for an import tool or try to upload through MCP.
 
 For the current-state document, require:
 
@@ -118,7 +117,7 @@ Before classifying inventory entries or extracting claims, read [references/evid
 
 Always:
 
-- inspect the live tool schema and taxonomy instead of using a remembered type list
+- read the live taxonomy from `strata_get_graph_schema` instead of using a remembered type list
 - put one claim in each node
 - copy 1 to 5 exact supporting spans from the same source
 - include a speaker only when the source identifies them
@@ -136,7 +135,7 @@ Inventory date signals are only candidates. Do not use a file modification time 
 
 Do not upload a document with an unresolved date. Ask the user to resolve it or leave the document out and record it in the report.
 
-Record the model and contract version in the report. Record `unknown` when the live contract does not state a version.
+Record the model and the bundle contract version in the report. The bundle format and its version are in the technical reference.
 
 ## Part 1: prepare and review the import
 
@@ -227,7 +226,7 @@ If search or retrieval tools are unavailable, stop and offer setup help. Do not 
 ## Stop and correct these problems
 
 - The target project is not confirmed as new or empty.
-- A mutating import tool is being invoked to inspect its schema.
+- An import upload is being attempted through an MCP tool instead of the browser Import page.
 - Machine-written narrative is being used as evidence.
 - Coarse extraction is using summaries instead of primary documents.
 - A claim contains more than one idea.

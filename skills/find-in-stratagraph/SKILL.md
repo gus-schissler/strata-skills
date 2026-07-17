@@ -22,7 +22,7 @@ Answer a focused question from the connected Stratagraph project. Verify the ans
 - If 1 Stratagraph connector is attached, use it. If several are attached, use the connector named by `strata_project`. If no connector is selected, ask which project to use before querying.
 - If no Stratagraph connector is available, tell the user to connect the project's MCP server. Stop until the tools are available.
 - Treat the live tool descriptions and input schemas as authoritative because tool parameters may change.
-- Use only read tools. Never call `strata_post_document`, `strata_import_document`, or another write tool while following this skill.
+- Use only read tools. Never call `strata_post_document` or another write tool while following this skill.
 - Read the project key from the MCP server instructions or tool descriptions. Do not infer it when the server provides it.
 - Read the application origin from the attached MCP connector URL when it is visible. Keep only the scheme and host. If the connector URL is not visible, use `https://stratagraph.io`.
 

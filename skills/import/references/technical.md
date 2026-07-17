@@ -117,7 +117,7 @@ Keep every parent review bundle.
 }
 ```
 
-Optional fields may be omitted. Each entry matches one document in the `strata_import_document` payload without `projectId` and `userId`.
+Optional fields may be omitted. This shape is the import contract: `validate` and `combine` enforce it, and the Stratagraph Import page consumes the combined bundle directly.
 
 ## Assign workers safely
 
