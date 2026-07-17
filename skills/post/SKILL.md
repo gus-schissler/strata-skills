@@ -71,7 +71,7 @@ If content exceeds the live tool limit, divide it only at natural source boundar
 
 ## Post and report the result
 
-`strata_post_document` accepts 1 document per call. Call it once for each approved document. When several documents are approved, post them sequentially and record each result before starting the next call. Stop after the first failure. Do not call `strata_import_document`; that tool is for a cold-start source whose claims were already extracted.
+`strata_post_document` accepts 1 document per call. Call it once for each approved document. When several documents are approved, post them sequentially and record each result before starting the next call. Stop after the first failure. There is no import MCP tool; cold-start imports use a separate skill and upload through the browser, not MCP.
 
 After the tool returns:
 
