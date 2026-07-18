@@ -9,7 +9,9 @@ description: >-
   structured data, and agent-written drafts that the agent can read. Preserve
   the source faithfully and choose the required document metadata. Do not use
   for finding information in Stratagraph, bulk cold-start imports, unattended
-  daily gathering, or posting content to another service.
+  daily gathering, posting content to another service, or posting a document
+  together with claims and relationships already classified from it (use
+  `post-extracted`).
 ---
 
 # Post content to Stratagraph
@@ -71,7 +73,7 @@ If content exceeds the live tool limit, divide it only at natural source boundar
 
 ## Post and report the result
 
-`strata_post_document` accepts 1 document per call. Call it once for each approved document. When several documents are approved, post them sequentially and record each result before starting the next call. Stop after the first failure. There is no import MCP tool; cold-start imports use a separate skill and upload through the browser, not MCP.
+`strata_post_document` accepts 1 document per call. Call it once for each approved document. When several documents are approved, post them sequentially and record each result before starting the next call. Stop after the first failure. There is no import MCP tool; cold-start imports use a separate skill and upload through the browser, not MCP. If the source's claims are already classified into typed nodes, with or without edges between them, use the `post-extracted` skill and `strata_post_extracted_document` instead so the classification attaches in the same call.
 
 After the tool returns:
 
