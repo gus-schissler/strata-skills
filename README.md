@@ -14,9 +14,9 @@ Answers focused questions from a connected Stratagraph project. It chooses the r
 
 Turns material the agent can read into an extraction-ready Markdown document and posts it with `strata_post_document`. It accepts pasted text, files, webpages, emails, message threads, transcripts, notes, structured data, and agent-written drafts. The skill preserves full source content, speaker labels, timestamps, and provenance. It posts Markdown and simple lossless conversions directly. When the agent must process, consolidate, interpret, or materially adjust the source, it shows the converted document for approval before posting. Invoke it with `/stratagraph:post`, or ask to post, save, add, send, put, capture, or upload something to Stratagraph.
 
-### `post-extracted`
+### `post-nodes`
 
-Posts a document to a connected Stratagraph project together with claims and relationships already classified from it, using `strata_post_extracted_document`. Use it when a source's claims are already typed, with or without edges between them, and should attach to an active project in one call instead of waiting on automatic extraction. The skill never invents a node key: it only cites keys returned by a search, get, or list tool this session, or given by the user, and it omits an edge rather than guess an endpoint. It reads accepted node types from the live schema rather than a memorized list, and requires every quote span to be an exact substring of the posted document. `counters` and `replaces` edges always land as pending conflicts for a human to adjudicate. Everything posted, the document, its nodes, and its edges, stays in the human review gate; nothing is added to the graph automatically. Invoke it with `/stratagraph:post-extracted`, or ask to post a document together with its already-extracted claims or relationships.
+Posts a source document to a connected Stratagraph project together with claims and relationships already classified from it, using `strata_post_nodes`. The document anchors the post; its claims land as candidate nodes in the human review gate, never directly in the graph. Use it when a source's claims are already typed, with or without edges between them, and should attach to an active project in one call instead of waiting on automatic extraction. The skill never invents a node key: it only cites keys returned by a search, get, or list tool this session, or given by the user, and it omits an edge rather than guess an endpoint. It reads accepted node types from the live schema rather than a memorized list, and requires every quote span to be an exact substring of the posted document. `counters` and `replaces` edges always land as pending conflicts for a human to adjudicate. Invoke it with `/stratagraph:post-nodes`, or ask to post a document together with its already-extracted claims or relationships.
 
 ### `import`
 
@@ -43,7 +43,7 @@ Install one skill:
 ```bash
 npx skills add Stratagraph/stratagraph-skills --skill find-in-stratagraph
 npx skills add Stratagraph/stratagraph-skills --skill post
-npx skills add Stratagraph/stratagraph-skills --skill post-extracted
+npx skills add Stratagraph/stratagraph-skills --skill post-nodes
 npx skills add Stratagraph/stratagraph-skills --skill import
 npx skills add Stratagraph/stratagraph-skills --skill gather
 ```
@@ -58,7 +58,7 @@ The skills CLI installs the selected canonical folders into the paths used by yo
 /reload-plugins
 ```
 
-Then `/stratagraph:find-in-stratagraph`, `/stratagraph:post`, `/stratagraph:post-extracted`, `/stratagraph:import`, and `/stratagraph:gather` are available. Claude can also invoke them automatically when a request matches. The marketplace manifest points at the same canonical `skills/` folders used by the skills CLI.
+Then `/stratagraph:find-in-stratagraph`, `/stratagraph:post`, `/stratagraph:post-nodes`, `/stratagraph:import`, and `/stratagraph:gather` are available. Claude can also invoke them automatically when a request matches. The marketplace manifest points at the same canonical `skills/` folders used by the skills CLI.
 
 ### MCP connection (all agents)
 

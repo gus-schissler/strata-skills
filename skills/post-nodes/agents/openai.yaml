@@ -1,0 +1,7 @@
+interface:
+  display_name: "Post nodes to Stratagraph"
+  short_description: "Post a source document with pre-classified claims and edges"
+  icon_small: "./assets/stratagraph.png"
+  icon_large: "./assets/stratagraph.png"
+  brand_color: "#D08C3F"
+  default_prompt: "Use $post-nodes to post this source document together with its pre-classified claims and edges to the connected Stratagraph project."

@@ -1,29 +1,29 @@
 ---
-name: post-extracted
+name: post-nodes
 description: >-
-  Post a document to a connected Stratagraph project together with its
-  pre-extracted candidate nodes and edges, using
-  `strata_post_extracted_document`. Everything posted lands in the human
-  review gate; nothing is added to the graph automatically. Use when a
-  source's claims are already classified into typed nodes, with or without
-  relationships between them, and should attach to an active Stratagraph
-  project in one call. Common requests include "post this document with its
-  extracted claims," "attach these decisions and action items to this
-  transcript," or a workflow that has already classified a source's claims
-  and relationships and needs to hand them off. Do not use for raw,
-  unclassified material with nothing extracted yet (use `post`), for
-  cold-starting a new or empty project from a source collection (use
+  Post a source document to a connected Stratagraph project together with the
+  claims and relationships already classified from it, using
+  `strata_post_nodes`. The document anchors the post; its claims land as
+  candidate nodes in the human review gate, never directly in the graph. Use
+  when a source's claims are already classified into typed nodes, with or
+  without relationships between them, and should attach to an active
+  Stratagraph project in one call. Common requests include "post this
+  document with its extracted claims," "attach these decisions and action
+  items to this transcript," or a workflow that has already classified a
+  source's claims and relationships and needs to hand them off. Do not use
+  for raw, unclassified material with nothing extracted yet (use `post`),
+  for cold-starting a new or empty project from a source collection (use
   `import`), or for finding or verifying information already in Stratagraph
   (use `find-in-stratagraph`).
 ---
 
-# Post a document with pre-extracted claims
+# Post a source document with pre-extracted claims
 
-Post a document to a connected Stratagraph project together with claims and relationships already classified from it, using `strata_post_extracted_document`. Everything posted, the document, its candidate nodes, and its edges, lands in the human review gate. Nothing is added to the graph automatically.
+Post a source document to a connected Stratagraph project together with claims and relationships already classified from it, using `strata_post_nodes`. The document anchors the post: every claim attaches to it, and everything posted, the document, its candidate nodes, and its edges, lands in the human review gate. Nothing is added to the graph automatically.
 
 ## Confirm the target and write intent
 
-- Find the attached tool whose name ends in `strata_post_extracted_document`. Full tool names may start with an MCP-generated identifier. Never assume a connector UUID, server URL, project key, or full tool name.
+- Find the attached tool whose name ends in `strata_post_nodes`. Full tool names may start with an MCP-generated identifier. Never assume a connector UUID, server URL, project key, or full tool name.
 - If 1 Stratagraph connector is attached, use it. If several are attached, use the connector named by `strata_project`. If the user has not selected one, ask which project to use before every write.
 - If no Stratagraph connector is available, give the user the [Stratagraph MCP setup page](https://stratagraph.io/settings/mcp). Tell them to connect the intended project, then stop until the tool is available.
 - Treat the live tool description and input schema as authoritative because fields, limits, and accepted types may change.
@@ -35,7 +35,7 @@ Post a document to a connected Stratagraph project together with claims and rela
 |---|---|
 | The source is raw material and nothing has been classified into claims yet | `post`. The standard extraction pipeline classifies it after a human reviews the document. |
 | The target project is new or empty and needs a whole source collection loaded and activated | `import` |
-| A source's claims are already identified, by the user, an upstream pipeline, or careful reading against the live schema, and should land as typed candidate nodes, with or without relationships, in an already-active project | `post-extracted` (this skill) |
+| A source's claims are already identified, by the user, an upstream pipeline, or careful reading against the live schema, and should land as typed candidate nodes, with or without relationships, in an already-active project | `post-nodes` (this skill) |
 
 This skill does not replace the standard extraction pipeline. It is for the case where the claims and relationships are already worked out and should attach to the document in the same call, instead of waiting for automatic extraction after a plain post.
 
