@@ -72,6 +72,8 @@ At least one endpoint of every edge must be an index into this call's `nodes` ar
 
 `counters` and `replaces` edges always land as pending conflicts for a human to adjudicate. Posting one does not overwrite or supersede anything automatically; it flags the disagreement for review. Say so when you report the result.
 
+Any in-batch node that is the source of a `replaces` edge must carry a non-empty `replace_reason` (see the node field table); if one is missing, the tool rejects the whole call before writing anything. A `replaces` edge whose source is an already-baked node is dropped and reported in `edges_dropped` with reason `baked_source_replaces_unsupported`, because the reason cannot attach to an already-baked node.
+
 ## Quote fidelity
 
 Every span must be an exact, verbatim substring of the document's `content`, copied character for character. Do not paraphrase a quote to make it read better, correct a transcription error, or otherwise adjust it to fit. A span that is not an exact substring is not evidence.
@@ -102,6 +104,7 @@ Same rules as `post`'s document fields, plus `narrative`.
 | `content` | One claim, 4000 characters or fewer. |
 | `speaker` | Optional. Include only when the source identifies who said or wrote it. The tool honors this for `transcript`-kind documents only; omit it for `document`-kind sources. |
 | `spans` | Optional, 1 to 5 exact quotes, 500 characters or fewer each. Each span must be a verbatim substring of the document's `content` field, not of this node's `content`. See "Quote fidelity." |
+| `replace_reason` | Required when this node is the source of a `replaces` edge in this call: a short reason the prior claim is superseded (e.g. "rescheduled to Q3", "vendor changed"). 2000 characters or fewer, and non-empty after trimming. Ignored for nodes that are not a `replaces` source. |
 | `section_label` | Optional. A short label for where in the document the claim comes from. |
 
 ### Edges (0 to 400 per call)
