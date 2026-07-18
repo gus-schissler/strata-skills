@@ -37,6 +37,14 @@ Read the request and identify:
 
 Ask a question only when 2 or more reasonable scopes would produce different answers. Otherwise, use the narrowest reasonable scope and state it when helpful.
 
+## Delegate the lookup to a subagent when possible
+
+If the environment can spawn subagents and a subagent can reach this project's Stratagraph tools, run the lookup in 1 subagent instead of the main conversation. The full nodes, documents, and traversals this skill reads are its context-heavy part, and the skill is read-only, so delegation keeps that payload out of the main context at no risk.
+
+- Give the subagent the framed question and this skill to follow.
+- The subagent's report must contain the exact returned node keys and the full node content behind every statement, including `occurred_at`, speaker, review status, and relevant edges. Never accept a paraphrase without keys: the report is the calling agent's only verification evidence, and every node key cited in the final answer comes from it.
+- If subagents are unavailable, or they cannot reach the project's tools, follow the rest of this skill directly.
+
 ## Choose the first tool
 
 | Question shape | Start with | What to do |
