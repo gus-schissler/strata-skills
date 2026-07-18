@@ -43,7 +43,7 @@ This skill does not replace the standard extraction pipeline. It is for the case
 
 Node keys look like `STRATA-42`: a project prefix and a number. An edge endpoint can reference an existing node instead of one in this batch, but only when you already hold a verified key for it.
 
-**Only cite a node key that a search, get, or list tool returned this session, or that the user gave you directly in this conversation.** Never guess a node key from memory, a title, a topic, or a pattern in other keys. If an edge needs an existing node as an endpoint and you do not have a verified key for it, omit that edge rather than fabricate a target, and report the omission. Do not silently drop it.
+**Only cite a node key that a search, get, or list tool returned this session, or that the user gave you directly in this conversation.** Never guess a node key from memory, a title, a topic, or a pattern in other keys. When an edge needs an existing node and you do not hold its key yet, search the graph with the `find-in-stratagraph` skill; it is the efficient, verified lookup path, so use it instead of improvising tool calls. If you still do not have a verified key, omit that edge rather than fabricate a target, and report the omission. Do not silently drop it.
 
 This is the same rule `find-in-stratagraph` uses for reading node keys. Writing an edge is a stronger claim than citing one, so treat it at least as strictly.
 
