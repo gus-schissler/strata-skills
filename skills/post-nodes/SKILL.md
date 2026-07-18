@@ -43,7 +43,7 @@ This skill does not replace the standard extraction pipeline. It is for the case
 
 Node keys look like `STRATA-42`: a project prefix and a number. An edge endpoint can reference an existing node instead of one in this batch, but only when you already hold a verified key for it.
 
-**Only cite a node key that a search, get, or list tool returned this session, or that the user gave you directly in this conversation.** Never guess a node key from memory, a title, a topic, or a pattern in other keys. If an edge needs an existing node as an endpoint and you do not have a verified key for it, omit that edge rather than fabricate a target, and report the omission. Do not silently drop it.
+**Only cite a node key that a search, get, or list tool returned this session, or that the user gave you directly in this conversation.** Never guess a node key from memory, a title, a topic, or a pattern in other keys. When an edge needs an existing node and you do not hold its key yet, use `find-in-stratagraph` when that skill is installed; it is the efficient, verified lookup path. If it is not installed, use the attached Stratagraph read tools directly: search for a candidate, fetch the full node, and inspect relevant edges before accepting the key. If no read tool is available or you still do not have a verified key, omit that edge rather than fabricate a target, and report the omission. Do not silently drop it.
 
 This is the same rule `find-in-stratagraph` uses for reading node keys. Writing an edge is a stronger claim than citing one, so treat it at least as strictly.
 
@@ -68,9 +68,11 @@ Read edge direction as `source verb target`, matching `find-in-stratagraph`:
 
 Draw an edge only when you are confident in the relationship. An unconfident or speculative connection is worse than no edge: leave it out rather than force a link.
 
-At least one endpoint of every edge must be an index into this call's `nodes` array. An edge whose source and target are both existing baked node keys is dropped by the tool and reported in `edges_dropped` with reason `both_endpoints_baked`. Declaring a relationship between two already-baked nodes is not this tool's job; the product has a human-adjudicated suggestions flow for that. Do not include such an edge to begin with.
+At least one endpoint of every edge must be an index into this call's `nodes` array. An edge whose source and target are both existing baked node keys is dropped by the tool and reported in `edges_dropped` with reason `both_endpoints_baked`. Declaring a relationship between two already-baked nodes is not this tool's job; the attached tool ending in `strata_suggest_edges` handles that separately. Do not include such an edge here, and do not call the suggestion tool unless the user separately and explicitly asks to propose the baked-to-baked relationship. Treat its live description, schema, and returned status as authoritative. Do not promise that every proposal waits for human review: an eligible `supports` suggestion may be promoted directly into the graph.
 
 `counters` and `replaces` edges always land as pending conflicts for a human to adjudicate. Posting one does not overwrite or supersede anything automatically; it flags the disagreement for review. Say so when you report the result.
+
+Any in-batch node that is the source of a `replaces` edge must carry a non-empty `replace_reason` (see the node field table); if one is missing, the tool rejects the whole call before writing anything. A `replaces` edge whose source is an already-baked node is dropped and reported in `edges_dropped` with reason `baked_source_replaces_unsupported`, because the reason cannot attach to an already-baked node.
 
 ## Quote fidelity
 
@@ -87,12 +89,12 @@ Same rules as `post`'s document fields, plus `narrative`.
 | Field | Rule |
 |---|---|
 | `content` | The complete document text, built the same way `post` builds it. Every node `spans` entry must be an exact substring of this text. |
-| `title` | Same rule as `post`'s title. |
+| `title` | Same rule as `post`'s title: short and recognizable, not a summary of the contents. A recap of the document belongs in `narrative`, never in the title. |
 | `kind` | `transcript` for attributed conversation, `document` for authored prose. Same rule as `post`. |
 | `source` | Same rule as `post`. Use `manual` for pasted or agent-written content. |
 | `occurred_at` | Same rule as `post`. |
 | `external_id` | Same rule as `post`. A repeat with the same external ID, or matching content hash, returns `status: "duplicate"` and writes nothing, including the nodes and edges in this call. |
-| `narrative` | Optional. The author's synthesis of the document, separate from any individual node's claim. Provide it only when the user or an upstream process actually wrote one. Do not generate a narrative just to fill the field. |
+| `narrative` | Optional. The "reporting back" recap: a short synthesis of the document, separate from any individual node's claim, shown on the review gate and post-bake receipt. As the extractor you may write it yourself — it is the place for cross-cutting framing that is not a single node's claim. Keep it brief; do not pad the field with a restatement of the nodes. |
 
 ### Nodes (1 to 200 per call)
 
@@ -102,6 +104,7 @@ Same rules as `post`'s document fields, plus `narrative`.
 | `content` | One claim, 4000 characters or fewer. |
 | `speaker` | Optional. Include only when the source identifies who said or wrote it. The tool honors this for `transcript`-kind documents only; omit it for `document`-kind sources. |
 | `spans` | Optional, 1 to 5 exact quotes, 500 characters or fewer each. Each span must be a verbatim substring of the document's `content` field, not of this node's `content`. See "Quote fidelity." |
+| `replace_reason` | Required when this node is the source of a `replaces` edge in this call: a short reason the prior claim is superseded (e.g. "rescheduled to Q3", "vendor changed"). 2000 characters or fewer, and non-empty after trimming. Omit it for nodes that are not a `replaces` source. |
 | `section_label` | Optional. A short label for where in the document the claim comes from. |
 
 ### Edges (0 to 400 per call)

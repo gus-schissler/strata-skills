@@ -37,6 +37,14 @@ Read the request and identify:
 
 Ask a question only when 2 or more reasonable scopes would produce different answers. Otherwise, use the narrowest reasonable scope and state it when helpful.
 
+## Delegate the lookup to a subagent when possible
+
+If the environment can spawn subagents and a subagent can reach this project's Stratagraph tools, run the lookup in 1 subagent instead of the main conversation. The full nodes, documents, and traversals this skill reads are its context-heavy part, and the skill is read-only, so delegation keeps that payload out of the main context at no risk.
+
+- Give the subagent the framed question and this skill to follow.
+- The subagent's report must contain the exact returned node keys and the full node content behind every statement, including `occurred_at`, speaker, review status, and relevant edges. Never accept a paraphrase without keys: the report is the calling agent's only verification evidence, and every node key cited in the final answer comes from it.
+- If subagents are unavailable, or they cannot reach the project's tools, follow the rest of this skill directly.
+
 ## Choose the first tool
 
 | Question shape | Start with | What to do |
@@ -77,6 +85,8 @@ Stop when the evidence answers the question and you have checked whether relevan
 - Remember that semantic search returns only the highest-ranked matches. It does not inspect every node, so a missing result does not prove that the project lacks the information.
 
 A recently posted node may still be waiting for search indexing. Say so when that could explain an empty result. If the document is known, use `strata_get_document`. Otherwise, run at most 1 more search with a different document, speaker, date, or specific term. Then name what you searched and the remaining limitation.
+
+If verified reading turns up a relationship between two already-baked nodes that the graph does not represent, mention that the attached tool ending in `strata_suggest_edges` can propose it with a reason. Do not call that write tool as part of this read-only skill. A later request to propose the relationship is separate explicit write intent; before acting on it, leave this workflow, read the tool's live description and schema, and report its returned status accurately. Do not promise that every proposal waits for human review: an eligible `supports` suggestion may be promoted directly into the graph.
 
 ## Answer with linked node keys
 
