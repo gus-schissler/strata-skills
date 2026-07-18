@@ -17,7 +17,7 @@ description: >-
   (use `find-in-stratagraph`).
 ---
 
-# Post a source document with pre-extracted claims
+# Post a source document with already-classified claims
 
 Post a source document to a connected Stratagraph project together with claims and relationships already classified from it, using `strata_post_nodes`. The document anchors the post: every claim attaches to it, and everything posted, the document, its candidate nodes, and its edges, lands in the human review gate. Nothing is added to the graph automatically.
 
@@ -100,7 +100,7 @@ Same rules as `post`'s document fields, plus `narrative`.
 |---|---|
 | `type` | One of the live node types. See "Choose node types from the live schema." |
 | `content` | One claim, 4000 characters or fewer. |
-| `speaker` | Optional. Include only when the source identifies who said or wrote it. |
+| `speaker` | Optional. Include only when the source identifies who said or wrote it. The tool honors this for `transcript`-kind documents only; omit it for `document`-kind sources. |
 | `spans` | Optional, 1 to 5 exact quotes, 500 characters or fewer each. Each span must be a verbatim substring of the document's `content` field, not of this node's `content`. See "Quote fidelity." |
 | `section_label` | Optional. A short label for where in the document the claim comes from. |
 
