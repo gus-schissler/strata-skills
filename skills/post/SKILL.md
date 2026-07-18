@@ -63,7 +63,7 @@ Set every field from source evidence or a documented default:
 | Field | Rule |
 |---|---|
 | `content` | Use the complete extraction-ready Markdown. Whitespace-only content is invalid. |
-| `title` | Prefer the user's title, then the source title or filename. Otherwise derive a short factual title from the content without adding unsupported detail. |
+| `title` | Prefer the user's title, then the source title or filename. Otherwise derive a short factual title from the content without adding unsupported detail. Wherever the title comes from — the user, a meeting name, a filename, a session — keep it short and recognizable: a name a person can scan in the document list, with the date when useful (e.g. "Sprint 6 demo 2026-06-17"). Do not summarize the contents in the title or stack clauses; trim a long source title to its recognizable core rather than carrying the whole thing over. |
 | `kind` | Use `transcript` for attributed conversation. Use `document` for authored prose. |
 | `source` | Use the provider, connector, application, or source type when known. Use `manual` for pasted or agent-written content. Never use the reserved value `manual_notes`. |
 | `occurred_at` | Use the actual source or event date when it is explicit or comes from reliable source metadata. Use `YYYY-MM-DD` when only the calendar day is known. A datetime must include `Z` or an explicit time-zone offset. For a transcript or event record with no known date, ask the user because the date controls its day in Stratagraph. For authored prose with no source date, omit the field so the tool uses the current day. Never use file modification time as the source date without user approval. |

@@ -89,12 +89,12 @@ Same rules as `post`'s document fields, plus `narrative`.
 | Field | Rule |
 |---|---|
 | `content` | The complete document text, built the same way `post` builds it. Every node `spans` entry must be an exact substring of this text. |
-| `title` | Same rule as `post`'s title. |
+| `title` | Same rule as `post`'s title: short and recognizable, not a summary of the contents. A recap of the document belongs in `narrative`, never in the title. |
 | `kind` | `transcript` for attributed conversation, `document` for authored prose. Same rule as `post`. |
 | `source` | Same rule as `post`. Use `manual` for pasted or agent-written content. |
 | `occurred_at` | Same rule as `post`. |
 | `external_id` | Same rule as `post`. A repeat with the same external ID, or matching content hash, returns `status: "duplicate"` and writes nothing, including the nodes and edges in this call. |
-| `narrative` | Optional. The author's synthesis of the document, separate from any individual node's claim. Provide it only when the user or an upstream process actually wrote one. Do not generate a narrative just to fill the field. |
+| `narrative` | Optional. The "reporting back" recap: a short synthesis of the document, separate from any individual node's claim, shown on the review gate and post-bake receipt. As the extractor you may write it yourself — it is the place for cross-cutting framing that is not a single node's claim. Keep it brief; do not pad the field with a restatement of the nodes. |
 
 ### Nodes (1 to 200 per call)
 
