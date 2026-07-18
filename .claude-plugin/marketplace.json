@@ -1,11 +1,14 @@
 {
   "name": "stratagraph-skills",
-  "owner": { "name": "Gus Schissler" },
+  "owner": {
+    "name": "Gus Schissler"
+  },
   "description": "Project-agnostic skills for finding, posting, and feeding knowledge in Stratagraph",
   "plugins": [
     {
       "name": "stratagraph",
       "displayName": "Stratagraph",
+      "version": "0.2.0",
       "source": "./",
       "strict": false,
       "skills": [
