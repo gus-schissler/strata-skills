@@ -68,6 +68,8 @@ Read edge direction as `source verb target`, matching `find-in-stratagraph`:
 
 Draw an edge only when you are confident in the relationship. An unconfident or speculative connection is worse than no edge: leave it out rather than force a link.
 
+At least one endpoint of every edge must be an index into this call's `nodes` array. An edge whose source and target are both existing baked node keys is dropped by the tool and reported in `edges_dropped` with reason `both_endpoints_baked`. Declaring a relationship between two already-baked nodes is not this tool's job; the product has a human-adjudicated suggestions flow for that. Do not include such an edge to begin with.
+
 `counters` and `replaces` edges always land as pending conflicts for a human to adjudicate. Posting one does not overwrite or supersede anything automatically; it flags the disagreement for review. Say so when you report the result.
 
 ## Quote fidelity
@@ -85,7 +87,7 @@ Same rules as `post`'s document fields, plus `narrative`.
 | Field | Rule |
 |---|---|
 | `content` | The complete document text, built the same way `post` builds it. Every node `spans` entry must be an exact substring of this text. |
-| `title` / `name` | Same rule as `post`. |
+| `title` | Same rule as `post`'s title. |
 | `kind` | `transcript` for attributed conversation, `document` for authored prose. Same rule as `post`. |
 | `source` | Same rule as `post`. Use `manual` for pasted or agent-written content. |
 | `occurred_at` | Same rule as `post`. |
@@ -99,7 +101,7 @@ Same rules as `post`'s document fields, plus `narrative`.
 | `type` | One of the live node types. See "Choose node types from the live schema." |
 | `content` | One claim, 4000 characters or fewer. |
 | `speaker` | Optional. Include only when the source identifies who said or wrote it. |
-| `spans` | Optional, 1 to 5 exact quotes from `content`, 500 characters or fewer each. See "Quote fidelity." |
+| `spans` | Optional, 1 to 5 exact quotes, 500 characters or fewer each. Each span must be a verbatim substring of the document's `content` field, not of this node's `content`. See "Quote fidelity." |
 | `section_label` | Optional. A short label for where in the document the claim comes from. |
 
 ### Edges (0 to 400 per call)
@@ -109,6 +111,8 @@ Same rules as `post`'s document fields, plus `narrative`.
 | `type` | `supports`, `counters`, `replaces`, or `resolves`. See "Edge semantics." |
 | `source` | The node the edge starts from: an index into this call's `nodes` array, or a verified existing `node_key`. |
 | `target` | The node the edge points to: same rule as `source`. |
+
+At least one of `source` and `target` must be an in-batch node index. The tool drops an edge whose endpoints are both existing baked node keys and reports it in `edges_dropped` with reason `both_endpoints_baked`.
 
 Treat the live tool schema as the source of truth for every limit in this section. It can change without this document being updated.
 
