@@ -11,10 +11,11 @@
       "skills": [
         "./skills/find-in-stratagraph",
         "./skills/post",
+        "./skills/post-nodes",
         "./skills/import",
         "./skills/gather"
       ],
-      "description": "Skills for using a Stratagraph knowledge project over MCP: find (verified lookup), post (general document intake), import (interactive cold-start), and gather (daily cloud routine). Requires your Stratagraph project's MCP server connected, e.g. https://stratagraph.io/api/mcp/YOURPROJECT"
+      "description": "Skills for using a Stratagraph knowledge project over MCP: find (verified lookup), post (general document intake), post-nodes (source document plus pre-classified claims and edges), import (interactive cold-start), and gather (daily cloud routine). Requires your Stratagraph project's MCP server connected, e.g. https://stratagraph.io/api/mcp/YOURPROJECT"
     }
   ]
 }
