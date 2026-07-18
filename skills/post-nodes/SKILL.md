@@ -68,7 +68,7 @@ Read edge direction as `source verb target`, matching `find-in-stratagraph`:
 
 Draw an edge only when you are confident in the relationship. An unconfident or speculative connection is worse than no edge: leave it out rather than force a link.
 
-At least one endpoint of every edge must be an index into this call's `nodes` array. An edge whose source and target are both existing baked node keys is dropped by the tool and reported in `edges_dropped` with reason `both_endpoints_baked`. Declaring a relationship between two already-baked nodes is not this tool's job; the product has a human-adjudicated suggestions flow for that. Do not include such an edge to begin with.
+At least one endpoint of every edge must be an index into this call's `nodes` array. An edge whose source and target are both existing baked node keys is dropped by the tool and reported in `edges_dropped` with reason `both_endpoints_baked`. Declaring a relationship between two already-baked nodes is not this tool's job; the attached tool ending in `strata_suggest_edges` is the door for that instead. Do not include such an edge to begin with.
 
 `counters` and `replaces` edges always land as pending conflicts for a human to adjudicate. Posting one does not overwrite or supersede anything automatically; it flags the disagreement for review. Say so when you report the result.
 

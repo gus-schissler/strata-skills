@@ -78,6 +78,8 @@ Stop when the evidence answers the question and you have checked whether relevan
 
 A recently posted node may still be waiting for search indexing. Say so when that could explain an empty result. If the document is known, use `strata_get_document`. Otherwise, run at most 1 more search with a different document, speaker, date, or specific term. Then name what you searched and the remaining limitation.
 
+If verified reading turns up a relationship between two already-baked nodes that the graph does not represent, that gap is worth surfacing rather than treated as unreportable. The attached tool ending in `strata_suggest_edges` exists to file such a relationship with a reason. Suggesting one is a write action and needs the user's explicit intent, so do not call it as part of this read-only skill; mention that the door exists and let the user decide.
+
 ## Answer with linked node keys
 
 Lead with the answer. Link every displayed node key to `{origin}/projects/{project_key}/nodes/{node_key}`. This rule applies to inline citations, supporting evidence, replacements, conflicts, and source lists.
