@@ -53,7 +53,12 @@ Read the accepted node types from `strata_get_graph_schema`, or the write tool's
 
 As of this writing the accepted types are `observation`, `decision`, `action_item`, `question`, `constraint`, and `risk`. `finding` is not accepted. Findings are synthesis-tier, built by connecting several claims after human review, so a single document's pre-extraction pass has no finding to post yet. If content looks like a finding-level synthesis, do not force it into one of the accepted types. Either narrow it to the single claim it actually supports, or leave it out and let it emerge later from the reviewed graph.
 
-Put one claim in each node. Do not combine several claims into one node to save calls; split them into separate nodes instead.
+## Author each claim
+
+One independently maintainable claim per node: split wherever one part could be countered, replaced, or resolved without the other part changing. Usually one sentence, in plain prose without em dashes or semicolons, with attribution in the structured fields rather than the claim text. Atomic does not mean telegraphic: each claim keeps the subject, scope, and timeframe it needs to stand alone, and details that jointly define one thing stay together.
+
+**Too packed:** "The deploy window moved to Tuesday because Friday releases kept paging on-call, and rollbacks now need a second approver."
+**Right:** "The weekly deploy window moved from Friday to Tuesday." / "Friday releases repeatedly paged the on-call engineer." / "Production rollbacks require a second approver."
 
 ## Edge semantics
 
