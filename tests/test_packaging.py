@@ -17,12 +17,21 @@ def canonical_skills():
     }
 
 
+def marketplace_plugin(marketplace, name="stratagraph"):
+    matches = [
+        plugin for plugin in marketplace["plugins"] if plugin.get("name") == name
+    ]
+    if len(matches) != 1:
+        raise AssertionError(f"expected exactly one marketplace plugin named {name!r}")
+    return matches[0]
+
+
 class PackagingTests(unittest.TestCase):
     def test_marketplace_points_to_each_canonical_skill(self):
         marketplace = json.loads(MARKETPLACE_PATH.read_text(encoding="utf-8"))
         self.assertEqual(len(marketplace["plugins"]), 1)
 
-        plugin = marketplace["plugins"][0]
+        plugin = marketplace_plugin(marketplace)
         self.assertEqual(plugin["source"], "./")
         self.assertFalse(plugin["strict"])
 
@@ -36,7 +45,7 @@ class PackagingTests(unittest.TestCase):
 
     def test_agent_surface_brand_assets_exist(self):
         marketplace = json.loads(MARKETPLACE_PATH.read_text(encoding="utf-8"))
-        plugin = marketplace["plugins"][0]
+        plugin = marketplace_plugin(marketplace)
         self.assertEqual(plugin["displayName"], "Stratagraph")
         self.assertNotIn("interface", plugin)
 
@@ -79,6 +88,13 @@ class PackagingTests(unittest.TestCase):
                     metadata,
                     r'(?m)^\s*brand_color:\s*"#[0-9A-Fa-f]{6}"\s*$',
                 )
+
+    def test_plugin_versions_match(self):
+        marketplace = json.loads(MARKETPLACE_PATH.read_text(encoding="utf-8"))
+        manifest = json.loads(CODEX_MANIFEST_PATH.read_text(encoding="utf-8"))
+        marketplace_version = marketplace_plugin(marketplace)["version"]
+        self.assertEqual(manifest["version"], marketplace_version)
+        self.assertRegex(marketplace_version, r"\A\d+\.\d+\.\d+\Z")
 
     def test_gather_adapter_points_to_the_canonical_skill(self):
         adapter = ROOT / ".claude" / "skills" / "gather"

@@ -61,7 +61,7 @@ For a question limited to a named source, use `strata_get_document` to inspect e
 
 ## Read the evidence
 
-Use `strata_search_nodes` to locate candidates. Never answer a substantive question from search snippets alone.
+Use `strata_search_nodes` to locate candidates. Treat `semantic_similarity` when supplied as relative proximity, not truth, confidence, relevance, or currentness. Never answer a substantive question from search snippets alone.
 
 After a useful search:
 
@@ -76,13 +76,17 @@ Stop when the evidence answers the question and you have checked whether relevan
 
 ## Check the answer
 
+A node's existence in the graph does not establish that it is relevant, true, or current. Describe conclusions as graph grounding — what the project records and currently treats as canonical — rather than externally verified truth unless separate evidence verifies them.
+
 - Base each factual statement on full node or document content, not on similarity rank.
-- Keep the source or event date from `occurred_at` when present. Do not silently replace it with ingestion time.
+- For current-state questions, inspect `occurred_at`, `occurred_at_basis` when supplied, `review`, incoming `replaces` and `resolves` relationships, and `counters` relationships in both directions. An inbound `replaces` edge retires a claim; counters and age alone do not.
+- Keep the source or event date from `occurred_at` when present. `document_date` is source context, not a promise of precise event time; `record_created` is the fallback for a documentless node. Do not silently replace either with another timestamp.
 - Attribute a statement to a person only when the node or source names that speaker.
 - Read edge direction as `source verb target`. A source with `replaces` supersedes its target. A `counters` edge means both claims still stand but disagree. A source with `resolves` closes its target question, action item, or risk. Report meaningful conflicts instead of choosing a side by similarity or date alone.
+- If the answer presents a replacing node as the current successor, start with `superseded_by` when search supplies it, then use `strata_list_edges` for each next inbound `replaces` hop. Track every visited node key. Stop if a key repeats; report a replacement cycle and that no live head was found. Stop after 20 hops; report the unresolved cap rather than guessing. If the walk ends at a node with no inbound `replaces`, cite that terminal successor and any chain needed to explain the change.
 - If a claim's `review` value is `imported`, say so when review status affects trust. Do not describe it as confirmed current state.
 - If an edge meaning is unclear, use `strata_get_graph_schema` instead of relying on memory.
-- Remember that semantic search returns only the highest-ranked matches. It does not inspect every node, so a missing result does not prove that the project lacks the information.
+- Remember that semantic search returns only the highest-ranked candidates. It does not inspect every node, so a missing result does not prove that the project lacks the information.
 
 A recently posted node may still be waiting for search indexing. Say so when that could explain an empty result. If the document is known, use `strata_get_document`. Otherwise, run at most 1 more search with a different document, speaker, date, or specific term. Then name what you searched and the remaining limitation.
 
