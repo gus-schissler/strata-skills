@@ -1,4 +1,3 @@
-import re
 import unittest
 from pathlib import Path
 
@@ -15,34 +14,50 @@ class FindInStratagraphTests(unittest.TestCase):
 
     def test_search_results_are_candidates_not_authority(self):
         self.assertIn("semantic_similarity", self.skill)
-        self.assertRegex(
+        self.assertIn(
+            "treat `semantic_similarity` when supplied as relative proximity, not truth, confidence, relevance, or currentness.",
             self.lower,
-            r"relative proximity, not truth, confidence, relevance, or currentness",
         )
-        self.assertRegex(
+        self.assertIn(
+            "a node's existence in the graph does not establish that it is relevant, true, or current.",
             self.lower,
-            r"existence in the graph does not establish that it is relevant, true, or current",
         )
-        self.assertIn("graph grounding", self.lower)
-        self.assertIn("externally verified truth", self.lower)
+        self.assertIn(
+            "describe conclusions as graph grounding — what the project records and currently treats as canonical — rather than externally verified truth unless separate evidence verifies them.",
+            self.lower,
+        )
 
     def test_current_state_checks_each_dimension(self):
         for field in ("occurred_at", "occurred_at_basis", "review"):
             with self.subTest(field=field):
                 self.assertIn(f"`{field}`", self.skill)
-        self.assertRegex(self.lower, r"incoming `replaces` and `resolves`")
-        self.assertRegex(self.lower, r"`counters` relationships in both directions")
-        self.assertRegex(self.lower, r"counters and age alone do not")
-
-    def test_replacement_chain_reaches_the_terminal_successor(self):
-        self.assertRegex(
+        self.assertIn(
+            "incoming `replaces` and `resolves` relationships, and `counters` relationships in both directions.",
             self.lower,
-            re.compile(
-                r"follow its inbound `replaces` relationships:.*repeat until the endpoint has no further inbound `replaces`",
-                re.DOTALL,
-            ),
         )
-        self.assertIn("terminal successor", self.lower)
+        self.assertIn(
+            "an inbound `replaces` edge retires a claim; counters and age alone do not.",
+            self.lower,
+        )
+
+    def test_replacement_chain_is_bounded_and_cycle_safe(self):
+        self.assertIn(
+            "start with `superseded_by` when search supplies it, then use `strata_list_edges` for each next inbound `replaces` hop.",
+            self.lower,
+        )
+        self.assertIn("track every visited node key.", self.lower)
+        self.assertIn(
+            "stop if a key repeats; report a replacement cycle and that no live head was found.",
+            self.lower,
+        )
+        self.assertIn(
+            "stop after 20 hops; report the unresolved cap rather than guessing.",
+            self.lower,
+        )
+        self.assertIn(
+            "if the walk ends at a node with no inbound `replaces`, cite that terminal successor",
+            self.lower,
+        )
 
 
 if __name__ == "__main__":
