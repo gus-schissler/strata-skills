@@ -49,7 +49,8 @@ The user may confirm that a document was written by a person. Record that confir
 
 ## Keep each claim verifiable
 
-- Put one claim in each node.
+- Put one independently maintainable claim in each node: split wherever one part could be countered, replaced, or resolved without the other part changing.
+- Usually one sentence, in plain prose without em dashes or semicolons. Atomic does not mean telegraphic: keep the subject, scope, and timeframe the claim needs to stand alone.
 - Copy 1 to 5 supporting spans exactly from the source.
 - Include a speaker only when the source identifies them.
 - Keep claims from different documents separate.
