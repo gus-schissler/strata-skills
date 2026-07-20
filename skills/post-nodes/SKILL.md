@@ -55,10 +55,10 @@ As of this writing the accepted types are `observation`, `decision`, `action_ite
 
 ## Author each claim
 
-One independently maintainable claim per node: split wherever one part could be countered, replaced, or resolved without the other part changing. Usually one sentence, in plain prose without em dashes or semicolons, with attribution in `speaker` rather than the content. Atomic does not mean telegraphic: each claim keeps the subject, scope, and timeframe it needs to stand alone, and details that jointly define one thing stay together.
+One independently maintainable claim per node: split wherever one part could be countered, replaced, or resolved without the other part changing. Usually one sentence, in plain prose without em dashes or semicolons, with attribution in the structured fields rather than the claim text. Atomic does not mean telegraphic: each claim keeps the subject, scope, and timeframe it needs to stand alone, and details that jointly define one thing stay together.
 
-Too packed: "The deploy window moved to Tuesday because Friday releases kept paging on-call, and rollbacks now need a second approver."
-Right: "The weekly deploy window moved from Friday to Tuesday." / "Friday releases repeatedly paged the on-call engineer." / "Production rollbacks require a second approver."
+**Too packed:** "The deploy window moved to Tuesday because Friday releases kept paging on-call, and rollbacks now need a second approver."
+**Right:** "The weekly deploy window moved from Friday to Tuesday." / "Friday releases repeatedly paged the on-call engineer." / "Production rollbacks require a second approver."
 
 ## Edge semantics
 

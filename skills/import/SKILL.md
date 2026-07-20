@@ -118,7 +118,7 @@ Before classifying inventory entries or extracting claims, read [references/evid
 Always:
 
 - read the live taxonomy from `strata_get_graph_schema` instead of using a remembered type list
-- put one claim in each node
+- put one independently maintainable claim in each node
 - copy 1 to 5 exact supporting spans from the same source
 - include a speaker only when the source identifies them
 - keep claims from different documents separate
